@@ -1,0 +1,88 @@
+import { ConvexError, v } from "convex/values";
+import { mutation, query } from "./_generated/server";
+import { api } from "./_generated/api"
+import {  Doc } from "./_generated/dataModel";
+
+export const createUser = mutation({
+  args: {
+    clerkId: v.string(),
+    email: v.string(),
+    name: v.string(),
+    stripeCustomerId: v.string(),
+    username: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.query("users").filter(q => q.or(q.eq(q.field("clerkId"), args.clerkId), q.eq(q.field("email"), args.email), q.eq(q.field("username"), args.username))).first();
+    if (user) {
+      throw new ConvexError("User already exists");
+    }
+    const folderId = await ctx.db.insert("folders", {
+      name: "Default Folder",
+      videosCount: 0,
+    })
+    const workspaceId = await ctx.db.insert("workspaces", {
+      name: `${args.name}'s Workspace`,
+      defaultFolder: folderId,
+      foldersCount: 1,
+      membersCount: 1,
+    })
+    const userId = await ctx.db.insert("users", {
+      clerkId: args.clerkId,
+      email: args.email,
+      name: args.name,
+      stripeCustomerId: args.stripeCustomerId,
+      username: args.username,
+      defaultWorkSpace: workspaceId,
+      workspaces: [workspaceId],
+    })
+    await ctx.db.patch(folderId, { workspace: workspaceId });
+    await ctx.db.patch(workspaceId, { admin: userId });
+    return userId;
+  }
+})
+export const updateUserProfile = mutation({
+  args: {
+    name: v.string(),
+    username: v.string(),
+    email: v.string(),
+    clerkId: v.string(),
+  },
+  handler: async (ctx, { name, username, email, clerkId }) => {
+    const user = await ctx.runQuery(api.users.getUserByClerkId, { clerkId: clerkId }) as Doc<"users">;
+    if (!user) {
+      throw new ConvexError("User not found");
+    }
+    await ctx.db.patch(user._id, {
+      name,
+      username,
+      email,
+    })
+    return user._id;
+  }
+})
+
+export const getUserByClerkId = query({
+  args: {
+    clerkId: v.string(),
+  },
+  handler: async (ctx, { clerkId }) => {
+    const user =  await ctx.db.query("users").filter(q => q.eq(q.field("clerkId"), clerkId)).first();
+    if (!user) {
+      throw new ConvexError(`User not found for clerkId: ${clerkId}`);
+    }
+    return user;
+  }
+})
+
+export const deleteUserByClerkId = mutation({
+  args: {
+    clerkId: v.string(),
+  },
+  handler: async (ctx, { clerkId }) => {
+    const user = await ctx.db.query("users").filter(q => q.eq(q.field("clerkId"), clerkId)).first();
+    if (!user) {
+      throw new ConvexError("User not found");
+    }
+    await ctx.db.delete(user._id);
+  }
+})
