@@ -31,7 +31,7 @@ http.route({
         "svix-timestamp": svix_timestamp,
       }) as WebhookEvent;
       if (event.type === "user.created" || event.type === "user.updated") {
-        const { email_addresses, primary_email_address_id, username, id, first_name, last_name } = event.data;
+        const { email_addresses, primary_email_address_id, username, id, first_name, last_name, image_url } = event.data;
         const primaryEmailAddress = email_addresses.find(email => email.id === primary_email_address_id)?.email_address
         if (event.type === "user.created") {
           const customer = await stripe.customers.create({
@@ -41,14 +41,15 @@ http.route({
           await ctx.runMutation(api.users.createUser, {
             clerkId: id,
             email: primaryEmailAddress as string,
-            name: `${first_name} ${last_name}`.trim(),
+            name: `${first_name} ${last_name ? last_name: ""}`.trim(),
             stripeCustomerId: customer.id,
             username: username as string,
+            profileImageUrl: image_url,
           });
         } else {
           await ctx.runMutation(api.users.updateUserProfile, {
             email: primaryEmailAddress as string,
-            name: `${first_name} ${last_name}`.trim(),
+            name: `${first_name} ${last_name ? last_name : ""}`.trim(),
             username: username as string,
             clerkId: id,
           })
@@ -57,6 +58,7 @@ http.route({
         await ctx.runMutation(api.users.deleteUserByClerkId, {
           clerkId: event.data.id as string,
         })
+
       }
     } catch (err) {
       throw new Error((err as Error).message);

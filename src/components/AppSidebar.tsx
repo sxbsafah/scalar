@@ -15,7 +15,7 @@ import { Link } from "react-router";
 import { useLocation } from "react-router";
 import Logo from "@/components/Logo";
 import { Button } from "./ui/button";
-import { ChevronDown, Plus, Zap } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, Zap } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -28,56 +28,76 @@ import { api } from "../../convex/_generated/api";
 import { useQuery } from "convex/react";
 import { Skeleton } from "./ui/skeleton";
 import { useAuth } from "@clerk/clerk-react";
+import React from "react";
 
 const AppSidebar = ({
   workspace,
   setWorkspace,
+  workspaces
 }: {
-  workspace: Doc<"workspaces"> | null;
-  setWorkspace: React.Dispatch<React.SetStateAction<Doc<"workspaces"> | null>>;
+  workspace: Doc<"workspaces"> | null,
+  setWorkspace: React.Dispatch<React.SetStateAction<Doc<"workspaces"> | null>>,
+  workspaces: (Doc<"workspaces"> | null)[] | undefined,
 }) => {
   const location = useLocation();
   const userIdentity = useAuth();
-  const workspaces = useQuery(api.workspaces.getUserWorkspaces);
   const user = useQuery(api.users.getUserByClerkId, {
     clerkId: userIdentity.userId as string,
   });
-  console.log("Sidebar render", { user, workspaces });
+  const [open, setOpen] = React.useState(false);
+
+
+
 
   return (
     <Sidebar>
-      <SidebarHeader className="">
+      <SidebarHeader className="mb-4">
         {workspaces ? (
           <Logo />
         ) : (
-          <div className="flex items-center gap-3">
-            <Skeleton className="w-7 h-7 rounded-xs" />
-            <Skeleton className="w-20 h-6 rounded-xs" />
+          <div className="flex items-center gap-3 mb-4">
+            {/* Logo image placeholder */}
+            <Skeleton className="size-8 rounded-md" />
+
+            {/* Text placeholder */}
+            <Skeleton className="h-[32px] w-[100px] rounded-sm" />
           </div>
         )}
         <Collapsible
+          open={open}
+          onOpenChange={setOpen}
           className={
             workspaces && `bg-card px-2  border-border border rounded-md`
           }
         >
           <CollapsibleTrigger asChild>
             {workspaces ? (
-              <div className={"flex items-center justify-between py-0.5"}>
-                <p className={"text-[14px] font-bold text-card-foreground ca"}>
-                  {!workspace
-                    ? workspaces.find(
-                        (workspace) => workspace?._id === user?.defaultWorkSpace
-                      )?.name
-                    : `${workspace?.name}'s Workspace`}
+              <div className={"flex items-center justify-between py-0.5 rounded-xl"}>
+                <p className={"text-[14px] font-bold text-card-foreground "}>
+                  {`${workspace?.name}'s Workspace`}
                 </p>
-                <ChevronDown
-                  width={24}
-                  height={24}
-                  className="text-muted-foreground"
-                />
+                {open ? (
+                  <ChevronUp
+                    width={24}
+                    height={24}
+                    className="text-muted-foreground"
+                  />
+                ) : (
+                  <ChevronDown
+                    width={24}
+                    height={24}
+                    className="text-muted-foreground"
+                  />
+                )}
               </div>
             ) : (
-              <Skeleton className="w-full h-4 rounded-xl" />
+              <div className="flex items-center justify-between py-0.5">
+                {/* Workspace name placeholder */}
+                <Skeleton className="h-[16px] w-[120px] rounded-md" />
+
+                {/* Chevron icon placeholder */}
+                <Skeleton className="size-6 rounded-md" />
+              </div>
             )}
           </CollapsibleTrigger>
           <CollapsibleContent asChild>
@@ -87,7 +107,10 @@ const AppSidebar = ({
                   key={workspace?._id}
                   variant="ghost"
                   size="sm"
-                  onClick={() => setWorkspace(workspace)}
+                  onClick={() => {
+                    setWorkspace(workspace);
+                    setOpen(false);
+                  }}
                   className="w-full h-auto justify-start px-2 py-1 rounded-xs font-normal "
                 >
                   {`${workspace?.name}'s Workspace`}
@@ -99,9 +122,9 @@ const AppSidebar = ({
         {workspaces ? (
           <Button
             size={"sm"}
-            className={"h-auto px-2 py-1 font-semibold gap-1.5"}
+            className={"h-auto px-2 py-1 font-semibold gap-1.5 text-[12px] "}
           >
-            <p className="text-[12px]">Invite To Workspace</p>
+            Invite To Workspace
             <Plus width={12} height={12} className="text-primary-foreground" />
           </Button>
         ) : (
@@ -121,7 +144,8 @@ const AppSidebar = ({
                 ? navigationItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
-                        isActive={location.pathname === item.to}
+                      isActive={location.pathname === item.to}
+                      className="text-muted-foreground font-semibold"
                       >
                         {item.icon}
                         <Link to={item.to}>{item.title}</Link>
@@ -175,7 +199,7 @@ const AppSidebar = ({
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        {user && user.activeSubscriptionId ? (
+        {user && !user.activeSubscriptionId ? (
           <div
             className={
               "p-4 bg-card rounded-2xl relative overflow-hidden broder-border border"
@@ -197,27 +221,22 @@ const AppSidebar = ({
             </Button>
             <div className="size-[150px] rounded-full absolute blur-[100px] bg-[#d9d9d9] opacity-15 top-[-50px] left-[-50px]"></div>
           </div>
-        ) : (
-          <div
-            className={
-              "p-4 bg-card rounded-2xl relative overflow-hidden broder-border border"
-            }
-          >
-            <Button variant={"outline"} size={"icon"} className="mb-[12px]">
-              <Zap />
-            </Button>
-            <h5 className="text-[12px] text-primary font-semibold mb-1">
-              {" "}
-              Upgrade To Pro
-            </h5>
-            <p className="text-[12px] font-semibold text-muted-foreground w-full mb-4">
-              Unlock AI Features, 1080p Video Uploading , more premium features
-            </p>
-            <Button className="w-full font-semibold text-[14px]">
-              {" "}
-              Upgrade Now
-            </Button>
-            <div className="size-[150px] rounded-full absolute blur-[100px] bg-[#d9d9d9] opacity-15 top-[-50px] left-[-50px]"></div>
+        ) : user && !user.activeSubscriptionId ? null : (
+          <div className="p-4 bg-card rounded-2xl relative overflow-hidden border border-border">
+            {/* Icon Button */}
+            <Skeleton className="h-9 w-9 mb-[12px] rounded-md" />
+
+            {/* Title */}
+            <Skeleton className="h-[18px] w-[90px] mb-1 rounded-sm" />
+
+            {/* Description */}
+            <Skeleton className="h-[32px] w-full mb-4 rounded-sm" />
+
+            {/* Button */}
+            <Skeleton className="h-9 w-full rounded-md" />
+
+            {/* Background Glow */}
+            <div className="size-[150px] rounded-full absolute blur-[100px] bg-[#d9d9d9] opacity-15 top-[-50px] left-[-50px]" />
           </div>
         )}
       </SidebarFooter>

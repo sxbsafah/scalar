@@ -10,6 +10,7 @@ export const createUser = mutation({
     name: v.string(),
     stripeCustomerId: v.string(),
     username: v.string(),
+    profileImageUrl: v.string(),
   },
   handler: async (ctx, args) => {
     const user = await ctx.db.query("users").filter(q => q.or(q.eq(q.field("clerkId"), args.clerkId), q.eq(q.field("email"), args.email), q.eq(q.field("username"), args.username))).first();
@@ -21,7 +22,7 @@ export const createUser = mutation({
       videosCount: 0,
     })
     const workspaceId = await ctx.db.insert("workspaces", {
-      name: `${args.name}'s Workspace`,
+      name: `${args.name}`,
       defaultFolder: folderId,
       foldersCount: 1,
       membersCount: 1,
@@ -34,8 +35,9 @@ export const createUser = mutation({
       username: args.username,
       defaultWorkSpace: workspaceId,
       workspaces: [workspaceId],
+      profileImageUrl: args.profileImageUrl ,
     })
-    await ctx.db.patch(folderId, { workspace: workspaceId });
+    await ctx.db.patch(folderId, { workspaceId: workspaceId });
     await ctx.db.patch(workspaceId, { admin: userId });
     return userId;
   }
@@ -57,6 +59,10 @@ export const updateUserProfile = mutation({
       username,
       email,
     })
+    const userAfterUpdate = await ctx.db.get(user._id) as Doc<"users">;
+    await ctx.db.patch(user.defaultWorkSpace, {
+      name: `${userAfterUpdate.name}`,
+    });
     return user._id;
   }
 })
@@ -84,5 +90,15 @@ export const deleteUserByClerkId = mutation({
       throw new ConvexError("User not found");
     }
     await ctx.db.delete(user._id);
+  }
+})
+
+
+export const getUserById = query({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, { userId }) => {
+    return await ctx.db.get(userId);
   }
 })

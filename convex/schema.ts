@@ -10,9 +10,10 @@ export default defineSchema({
     clerkId: v.string(),
     username: v.string(),
     stripeCustomerId: v.string(),
-    defaultWorkSpace: v.string(),
+    defaultWorkSpace: v.id("workspaces"),
     activeSubscriptionId: v.optional(v.string()),
     workspaces: v.array(v.id("workspaces")),
+    profileImageUrl: v.string(),
   }),
   subscriptions: defineTable({
     userId: v.id("users"),
@@ -32,7 +33,7 @@ export default defineSchema({
   folders: defineTable({
     name: v.string(),
     videosCount: v.number(),
-    workspace: v.optional(v.id("workspaces")),
+    workspaceId: v.optional(v.id("workspaces")),
   }),
   notifications: defineTable({
     userId: v.id("users"),
@@ -45,6 +46,7 @@ export default defineSchema({
     videoUrl: v.string(),
     userId: v.id("users"),
     commentsCount: v.number(),
+    watchCount: v.number(),
   }),
   comments: defineTable({
     userId: v.id("users"),

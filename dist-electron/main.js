@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu } from "electron";
+import { app, BrowserWindow } from "electron";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -15,11 +15,11 @@ function createWindow() {
     minHeight: 800,
     width: 1e3,
     height: 800,
-    titleBarStyle: "hidden",
-    titleBarOverlay: {
-      color: "#0a0a0a",
-      symbolColor: "#fff"
-    },
+    // titleBarStyle: 'hidden',
+    // titleBarOverlay: {
+    //   color: "#0a0a0a",
+    //   symbolColor: "#fff"
+    // },
     // hasShadow: true,
     webPreferences: {
       preload: path.join(__dirname, "preload.mjs"),
@@ -27,7 +27,6 @@ function createWindow() {
       nodeIntegration: false
     }
   });
-  Menu.setApplicationMenu(null);
   win.webContents.on("did-finish-load", () => {
     win == null ? void 0 : win.webContents.send("main-process-message", (/* @__PURE__ */ new Date()).toLocaleString());
   });

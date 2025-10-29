@@ -31,11 +31,11 @@ function createWindow() {
     minHeight: 800,
     width: 1000,
     height: 800,
-    titleBarStyle: 'hidden',
-    titleBarOverlay: {
-      color: "#0a0a0a",
-      symbolColor: "#fff"
-    },
+    // titleBarStyle: 'hidden',
+    // titleBarOverlay: {
+    //   color: "#0a0a0a",
+    //   symbolColor: "#fff"
+    // },
     // hasShadow: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
@@ -43,7 +43,7 @@ function createWindow() {
       nodeIntegration: false,
     },
   })
-  Menu.setApplicationMenu(null);
+  // Menu.setApplicationMenu(null);
 
   // Test active push message to Renderer-process.
   win.webContents.on('did-finish-load', () => {

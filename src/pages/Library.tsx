@@ -1,12 +1,263 @@
-import { UserButton, ClerkLoaded, ClerkLoading } from "@clerk/clerk-react";
+import { ClerkLoaded, ClerkLoading } from "@clerk/clerk-react";
 import Loader from "@/components/Loader";
+import Title from "@/components/Title";
+import { Button } from "@/components/ui/button";
+import { FolderPlus } from "lucide-react";
+import Folder from "@/components/Folder";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { useWorkspace } from "@/hooks/useWorkspace";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTrigger,
+  DialogDescription,
+  DialogClose,
+  DialogFooter,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { useForm, Controller } from "react-hook-form";
+import { Spinner } from "@/components/ui/spinner";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Field, FieldLabel, FieldError } from "@/components/ui/field";
+import VideoCard from "@/components/VideoCard";
+import { motion } from "motion/react";
+import { useState, useEffect, useRef } from "react";
+import FoldersSkeletonLoading from "@/components/FoldersSkeletonLoading";
+import { Doc, Id } from "../../convex/_generated/dataModel";
+import VideoCardSkeleton from "@/components/VideCardSkeleton";
+
+export const folderSchema = z.object({
+  name: z.string().min(2, "Folder name must be at least 2 characters long"),
+});
+
+type FolderType = z.infer<typeof folderSchema>;
 
 const Library = () => {
+  const [folder, setFolder] = useState<Id<"folders"> | undefined>(undefined);
+  const [initialAnimation, setInitialAnimation] = useState(true);
+  const workspaceRef = useRef<Doc<"workspaces"> | null>(null);
+  const foldersRef = useRef<Doc<"folders">[] | undefined>(undefined);
+  const workspace = useWorkspace();
+  const folders = useQuery(
+    api.folders.getFoldersByWorkspaceId,
+    workspace
+      ? {
+          workspaceId: workspace?._id,
+        }
+      : "skip"
+  );
+  const videos = useQuery(
+    api.videos.getVideosByFolderId,
+    folder
+      ? {
+          folderId: folder,
+        }
+      : "skip"
+  );
+  useEffect(() => {
+    if (workspace && !folder) {
+      setFolder(workspace.defaultFolder);
+    }
+  }, [workspace]);
+
+  useEffect(() => {
+    if (!workspace && !folders) return;
+    const hasWorkspaceChanged = workspaceRef.current?._id !== workspace?._id;
+    const hasFoldersChanged =
+      JSON.stringify(foldersRef.current) !== JSON.stringify(folders);
+    if (hasWorkspaceChanged && hasFoldersChanged) {
+      setInitialAnimation(true);
+    } else {
+      setInitialAnimation(false);
+    }
+    workspaceRef.current = workspace;
+    foldersRef.current = folders;
+  }, [folders, workspace]);
+  const {
+    handleSubmit,
+    setError,
+    control,
+    reset,
+    formState: { isSubmitting },
+  } = useForm<FolderType>({
+    resolver: zodResolver(folderSchema),
+    defaultValues: {
+      name: "",
+    },
+  });
+  const createFolder = useMutation(api.folders.createFolder);
+
+  const onFolderCreation = async ({ name }: FolderType) => {
+    try {
+      if (workspace) {
+        const folder = await createFolder({
+          workspaceId: workspace._id,
+          folderName: name,
+        });
+
+        if ((folder as { errors: string[] }).errors) {
+          setError("name", {
+            type: "manual",
+            message: "Folder with This Name Already Exist",
+          });
+        }
+      }
+      reset({
+        name: "",
+      }); // reset other form state but keep defaultValues and form values
+    } catch (err) {
+      setError("name", {
+        type: "manual",
+        message: (err as Error).message,
+      });
+    }
+  };
   return (
     <>
       <ClerkLoaded>
         <div>
-          <UserButton />
+          <div className="flex justify-between items-center mb-4">
+            <Title Title={"Folders"} subTitle={"Manage your folders"} />
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant={"outline"}>
+                  <FolderPlus />
+                  New Folder
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <form
+                  action=""
+                  onSubmit={handleSubmit(onFolderCreation)}
+                  className="space-y-4"
+                >
+                  <DialogHeader>
+                    <DialogTitle>Add New Folder</DialogTitle>
+                    <DialogDescription>
+                      Add new Folder to your workspace here. Click save when
+                      you&apos;done
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-3">
+                    <Controller
+                      name="name"
+                      control={control}
+                      render={({ field, fieldState }) => (
+                        <Field data-invalid={fieldState.invalid}>
+                          <FieldLabel>Folder Name</FieldLabel>
+                          <Input
+                            {...field}
+                            aria-invalid={fieldState.invalid}
+                            placeholder="Enter Folder Name"
+                          />
+                          {fieldState.invalid && (
+                            <FieldError
+                              errors={[fieldState.error]}
+                              className="field-error-message"
+                            />
+                          )}
+                        </Field>
+                      )}
+                    />
+                  </div>
+                  <DialogFooter>
+                    <DialogClose asChild>
+                      <Button variant="outline">Cancel</Button>
+                    </DialogClose>
+                    <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting ? (
+                        <>
+                          <Spinner />
+                          Creating
+                        </>
+                      ) : (
+                        "Create"
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+          <div className="flex flex-wrap items-start gap-2 mb-10">
+            {folders ? (
+              folders.map((folder, idx) => (
+                <motion.div
+                  key={folder._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  layout
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.5,
+                    delay: initialAnimation ? idx * 0.1 : 0,
+                    ease: [0.4, 0, 0.2, 1],
+                  }}
+                >
+                  <Folder
+                    folderName={folder.name}
+                    videosCount={folder.videosCount}
+                  />
+                </motion.div>
+              ))
+            ) : (
+              <>
+                <FoldersSkeletonLoading />
+                <FoldersSkeletonLoading />
+                <FoldersSkeletonLoading />
+                <FoldersSkeletonLoading />
+                <FoldersSkeletonLoading />
+                <FoldersSkeletonLoading />
+                <FoldersSkeletonLoading />
+                <FoldersSkeletonLoading />
+              </>
+            )}
+          </div>
+          <div className="mt-6 mb-4">
+            <Title Title={"Videos"} subTitle={"Manage Your Videos"} />
+          </div>
+          <div className="flex flex-wrap items-start gap-2 ">
+            {videos && folders ? (
+              videos.map((video, idx) => (
+                <motion.div
+                  key={video.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  layout
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.5,
+                    delay: initialAnimation ? idx * 0.1 : 0,
+                    ease: [0.4, 0, 0.2, 1],
+                  }}
+                >
+                  <VideoCard
+                    title={video.title}
+                    watchCount={video.watchCount}
+                    commentsCount={video.commentsCount}
+                    user={video.user?.username as string}
+                    time={"4d ago"}
+                    avatar={video.user?.profileImageUrl as string}
+                    thumbnail={video.thumbnailUrl}
+                  />
+                </motion.div>
+              ))
+            ) : (
+                <>
+                  <VideoCardSkeleton />
+                  <VideoCardSkeleton />
+                  <VideoCardSkeleton />
+                  <VideoCardSkeleton />
+                  <VideoCardSkeleton />
+                  <VideoCardSkeleton />
+                  <VideoCardSkeleton />
+
+              </>
+            )}
+
+          </div>
         </div>
       </ClerkLoaded>
       <ClerkLoading>

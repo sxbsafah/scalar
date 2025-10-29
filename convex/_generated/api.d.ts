@@ -8,8 +8,10 @@
  * @module
  */
 
+import type * as folders from "../folders.js";
 import type * as http from "../http.js";
 import type * as users from "../users.js";
+import type * as videos from "../videos.js";
 import type * as workspaces from "../workspaces.js";
 
 import type {
@@ -27,8 +29,10 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  folders: typeof folders;
   http: typeof http;
   users: typeof users;
+  videos: typeof videos;
   workspaces: typeof workspaces;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
