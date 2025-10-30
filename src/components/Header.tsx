@@ -4,6 +4,7 @@ import { Upload, Video } from "lucide-react";
 import { Input } from "./ui/input";
 
 const Header = () => {
+  // Implementing Vector Search 
   return (
     <header className="flex items-center justify-between py-4 w-full mb-12">
       <div>

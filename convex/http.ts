@@ -4,6 +4,11 @@ import { Webhook } from "svix";
 import { type WebhookEvent } from "@clerk/backend";
 import stripe from "../src/lib/stripe";
 import { api } from "./_generated/api";
+import  { Stripe } from "stripe"
+import { ConvexError } from "convex/values";
+
+
+
 
 const http = httpRouter();
 
@@ -37,6 +42,9 @@ http.route({
           const customer = await stripe.customers.create({
             name: `${first_name} ${last_name}`.trim(),
             email: primaryEmailAddress,
+            metadata: {
+              clerkId: id,
+            }
           });
           await ctx.runMutation(api.users.createUser, {
             clerkId: id,
@@ -66,5 +74,53 @@ http.route({
     return new Response("Success", { status: 200 });
   }),
 });
+
+
+
+http.route({
+  path: "/stripe-webhook",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!stripeWebhookSecret) {
+      return new Response("Stripe Web Hook Secret", {
+        status: 500,
+      })
+    }
+    const stripeSignature = request.headers.get("stripe-signature");
+    if (!stripeSignature) {
+      return new Response("Stripe Signature Header is absent", {
+        status: 400,
+      })
+    }
+    const payload = await request.text();
+    try {
+      const event = await stripe.webhooks.constructEventAsync(payload, stripeSignature, stripeWebhookSecret)
+      if (event.type === "customer.subscription.created" || event.type === "customer.subscription.updated") {
+        if (!event.data.object.latest_invoice || event.data.object.status !== "active") {
+          return new Response("Payment Failed")
+        }
+        await ctx.runMutation(api.subscriptions.upsertSubscription, {
+          clerkId: event.data.object.metadata.clerkId,
+          stripeSubscriptionId: event.data.object.id,
+          status: event.data.object.status,
+          startingDate: event.data.object.items.data[0].current_period_start as number,
+          endingDate: event.data.object.items.data[0].current_period_end as number,
+          planType: event.data.object.items.data[0].price.recurring?.interval as "month" | "year",
+          cancelAtPeriodEnd: event.data.object.cancel_at_period_end,
+        })
+      } else if (event.type === "customer.subscription.deleted") {
+        await ctx.runMutation(api.subscriptions.deleteSubscription, {
+          stripeSubscriptionId: event.data.object.id,
+        })
+      }
+    } catch (error) {
+      throw new ConvexError((error as Error).message);
+    }
+    return new Response("Route Handeld Succefuly", {
+      status: 200
+    })
+  })
+})
 
 export default http;

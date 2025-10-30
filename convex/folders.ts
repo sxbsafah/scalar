@@ -41,8 +41,17 @@ export const createFolder = mutation({
     const workspace = await ctx.db.get(workspaceId) as Doc<"workspaces">;
     if (!workspace) {
       throw new ConvexError("Workspace Not Found");
-    } 
+    }
+    const user = await ctx.db.query("users").filter(q => q.eq(q.field("clerkId"), identity.subject)).first();
+    if (!user) {
+      throw new ConvexError("User Not Found");
+    }
+    if (!user.workspaces.includes(workspace._id)) {
+      throw new ConvexError("User Does Not Have Access To This Workspace");
+    }
+
     const validatedData = folderSchema.safeParse({ name: folderName });
+
     if (!validatedData.success) {
       return { errors: validatedData.error.message };
     }
@@ -64,3 +73,29 @@ export const createFolder = mutation({
     })
   }
 })
+
+export const getFolderByIdandWorkspaceId = query({
+  args: {
+    folderId: v.id("folders"),
+    workspaceId: v.id("workspaces"),
+  },
+  handler: async (ctx,{ folderId, workspaceId }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("User Identity Is Uknown");
+    }
+    const workspace = await ctx.db.get(workspaceId) as Doc<"workspaces">;
+    if (!workspace) {
+      throw new ConvexError("Workspace Not Found");
+    }
+    const user = await ctx.db.query("users").filter(q => q.eq(q.field("clerkId"), identity.subject)).first();
+    if (!user) {
+      throw new ConvexError("User Not Found");
+    }
+    if (!user.workspaces.includes(workspace._id)) {
+      throw new ConvexError("User Does Not Have Access To This Workspace");
+    }
+    return await ctx.db.get(folderId);
+  }
+})
+

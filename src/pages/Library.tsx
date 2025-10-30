@@ -52,17 +52,20 @@ const Library = () => {
   );
   const videos = useQuery(
     api.videos.getVideosByFolderId,
-    folder
+    folder && workspace
       ? {
           folderId: folder,
         }
       : "skip"
   );
   useEffect(() => {
-    if (workspace && !folder) {
+    if (workspace) {
       setFolder(workspace.defaultFolder);
     }
   }, [workspace]);
+  useEffect(() => {
+    console.log(videos);
+  }, [folder]);
 
   useEffect(() => {
     if (!workspace && !folders) return;
@@ -101,9 +104,9 @@ const Library = () => {
 
         if ((folder as { errors: string[] }).errors) {
           setError("name", {
-            type: "manual",
             message: "Folder with This Name Already Exist",
           });
+          return;
         }
       }
       reset({
@@ -111,7 +114,6 @@ const Library = () => {
       }); // reset other form state but keep defaultValues and form values
     } catch (err) {
       setError("name", {
-        type: "manual",
         message: (err as Error).message,
       });
     }
@@ -119,7 +121,7 @@ const Library = () => {
   return (
     <>
       <ClerkLoaded>
-        <div>
+        <div className="flex flex-col ">
           <div className="flex justify-between items-center mb-4">
             <Title Title={"Folders"} subTitle={"Manage your folders"} />
             <Dialog>
@@ -156,8 +158,8 @@ const Library = () => {
                           />
                           {fieldState.invalid && (
                             <FieldError
-                              errors={[fieldState.error]}
                               className="field-error-message"
+                              errors={[fieldState.error]}
                             />
                           )}
                         </Field>
@@ -192,7 +194,7 @@ const Library = () => {
                   layout
                   animate={{ opacity: 1, y: 0 }}
                   transition={{
-                    duration: 0.5,
+                    duration: 0.1,
                     delay: initialAnimation ? idx * 0.1 : 0,
                     ease: [0.4, 0, 0.2, 1],
                   }}
@@ -200,6 +202,9 @@ const Library = () => {
                   <Folder
                     folderName={folder.name}
                     videosCount={folder.videosCount}
+                    onClick={() => {
+                      setFolder(folder._id);
+                    }}
                   />
                 </motion.div>
               ))
@@ -219,9 +224,23 @@ const Library = () => {
           <div className="mt-6 mb-4">
             <Title Title={"Videos"} subTitle={"Manage Your Videos"} />
           </div>
-          <div className="flex flex-wrap items-start gap-2 ">
-            {videos && folders ? (
-              videos.map((video, idx) => (
+          <div
+            className={`${videos?.length !== 0 || videos === undefined ? "flex flex-wrap items-start gap-2" : "flex flex-col grow items-center"}`}
+          >
+            {videos === undefined ? (
+              <>
+                <VideoCardSkeleton />
+                <VideoCardSkeleton />
+                <VideoCardSkeleton />
+                <VideoCardSkeleton />
+                <VideoCardSkeleton />
+                <VideoCardSkeleton />
+                <VideoCardSkeleton />
+              </>
+            ) : videos.length === 0 ? (
+              <h1 className="text-3xl">No Videos To see here</h1>
+            ) : (
+              videos?.map((video, idx) => (
                 <motion.div
                   key={video.title}
                   initial={{ opacity: 0, y: 20 }}
@@ -244,19 +263,7 @@ const Library = () => {
                   />
                 </motion.div>
               ))
-            ) : (
-                <>
-                  <VideoCardSkeleton />
-                  <VideoCardSkeleton />
-                  <VideoCardSkeleton />
-                  <VideoCardSkeleton />
-                  <VideoCardSkeleton />
-                  <VideoCardSkeleton />
-                  <VideoCardSkeleton />
-
-              </>
             )}
-
           </div>
         </div>
       </ClerkLoaded>

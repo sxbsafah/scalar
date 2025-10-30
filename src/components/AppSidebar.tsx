@@ -25,19 +25,20 @@ import { Separator } from "./ui/separator";
 import { ScrollArea } from "./ui/scroll-area";
 import { Doc } from "../../convex/_generated/dataModel";
 import { api } from "../../convex/_generated/api";
-import { useQuery } from "convex/react";
+import { useAction, useQuery } from "convex/react";
 import { Skeleton } from "./ui/skeleton";
 import { useAuth } from "@clerk/clerk-react";
 import React from "react";
+import { Spinner } from "./ui/spinner";
 
 const AppSidebar = ({
   workspace,
   setWorkspace,
-  workspaces
+  workspaces,
 }: {
-  workspace: Doc<"workspaces"> | null,
-  setWorkspace: React.Dispatch<React.SetStateAction<Doc<"workspaces"> | null>>,
-  workspaces: (Doc<"workspaces"> | null)[] | undefined,
+  workspace: Doc<"workspaces"> | null;
+  setWorkspace: React.Dispatch<React.SetStateAction<Doc<"workspaces"> | null>>;
+  workspaces: (Doc<"workspaces"> | null)[] | undefined;
 }) => {
   const location = useLocation();
   const userIdentity = useAuth();
@@ -45,9 +46,20 @@ const AppSidebar = ({
     clerkId: userIdentity.userId as string,
   });
   const [open, setOpen] = React.useState(false);
-
-
-
+  const [isProcessing, setIsProcessing] = React.useState(false);
+  const handleUpgrade = async (plan: "month" | "year") => {
+    setIsProcessing(true);
+    const session = await createCheckoutSession({ plan: plan });
+    if (session.checkout_url) {
+      window.location.href = session.checkout_url;
+    } else {
+      throw new Error("payment Error");
+    }
+  };
+  const createCheckoutSession = useAction(
+    api.stripe.createPremiumCheckoutSession
+  );
+  // implementing Invitations
 
   return (
     <Sidebar>
@@ -72,8 +84,16 @@ const AppSidebar = ({
         >
           <CollapsibleTrigger asChild>
             {workspaces ? (
-              <div className={"flex items-center justify-between py-0.5 rounded-xl"}>
-                <p className={"text-[14px] font-bold text-card-foreground "}>
+              <div
+                className={
+                  "flex items-center justify-between py-0.5 rounded-xl"
+                }
+              >
+                <p
+                  className={
+                    "text-[14px] font-bold text-card-foreground line-clamp-1"
+                  }
+                >
                   {`${workspace?.name}'s Workspace`}
                 </p>
                 {open ? (
@@ -111,7 +131,7 @@ const AppSidebar = ({
                     setWorkspace(workspace);
                     setOpen(false);
                   }}
-                  className="w-full h-auto justify-start px-2 py-1 rounded-xs font-normal "
+                  className="w-full h-auto justify-start px-2 py-1 rounded-xs font-normal line-clamp-1"
                 >
                   {`${workspace?.name}'s Workspace`}
                 </Button>
@@ -144,8 +164,8 @@ const AppSidebar = ({
                 ? navigationItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
-                      isActive={location.pathname === item.to}
-                      className="text-muted-foreground font-semibold"
+                        isActive={location.pathname === item.to}
+                        className="text-muted-foreground font-semibold"
                       >
                         {item.icon}
                         <Link to={item.to}>{item.title}</Link>
@@ -184,7 +204,7 @@ const AppSidebar = ({
                         <Button size="icon-sm">
                           {workspace?.name[0].toUpperCase()}
                         </Button>
-                        <p className="font-medium text-[16px]">
+                        <p className="font-medium text-[16px] line-clamp-1">
                           {`${workspace?.name}'s Workspace`}
                         </p>
                       </div>
@@ -215,13 +235,23 @@ const AppSidebar = ({
             <p className="text-[12px] font-semibold text-muted-foreground w-full mb-4">
               Unlock AI Features, 1080p Video Uploading , more premium features
             </p>
-            <Button className="w-full font-semibold text-[14px]">
-              {" "}
-              Upgrade Now
+            <Button
+              className="w-full font-semibold text-[14px]"
+              disabled={isProcessing}
+              onClick={() => handleUpgrade("month")}
+            >
+              {isProcessing ? (
+                <>
+                  <Spinner />
+                  Processing
+                </>
+              ) : (
+                "Upgrade Now"
+              )}
             </Button>
             <div className="size-[150px] rounded-full absolute blur-[100px] bg-[#d9d9d9] opacity-15 top-[-50px] left-[-50px]"></div>
           </div>
-        ) : user && !user.activeSubscriptionId ? null : (
+        ) : user && user.activeSubscriptionId ? null : (
           <div className="p-4 bg-card rounded-2xl relative overflow-hidden border border-border">
             {/* Icon Button */}
             <Skeleton className="h-9 w-9 mb-[12px] rounded-md" />

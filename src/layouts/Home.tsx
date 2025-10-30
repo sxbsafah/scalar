@@ -29,7 +29,6 @@ const Home = () => {
     }
   }, [workspaces]);
 
-  console.log(workspace, workspaces, user);
   return (
     <>
       <ClerkLoading>

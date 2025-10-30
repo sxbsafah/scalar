@@ -37,8 +37,8 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
   --font-sans:
-    "Inter",ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif,
+    "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --font-mono:
@@ -101,8 +101,8 @@
   --sidebar-border: oklch(0.275 0 0);
   --sidebar-ring: oklch(0.439 0 0);
   --font-sans:
-    " Inter",ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif,
+    " Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --font-mono:
@@ -185,7 +185,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground overflow-x-hidden ;
   }
   a.active {
     @apply bg-accent text-accent-foreground;
@@ -198,13 +198,13 @@
     @apply bg-muted rounded h-2;
   }
   button {
-    cursor: pointer;
+    @apply cursor-pointer;
   }
   .field-error-message::before {
-  content: "• ";
-  margin-right: 0.25rem; /* optional spacing */
-  color: inherit;
-}
+    content: "• ";
+    margin-right: 0.25rem; /* optional spacing */
+    color: inherit;
+  }
 }
 
 @layer utilties {

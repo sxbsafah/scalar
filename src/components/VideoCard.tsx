@@ -22,9 +22,9 @@ const VideoCard = ({
   commentsCount,
 }: VideoCardProps) => {
   return (
-    <div className="bg-card text-card-foreground rounded-xl border border-border w-[300px] hover:cursor-pointer hover:shadow-2xl hover:scale-[1.01] transition-all">
-      <img src={thumbnail} alt="Thumbnail" className="rounded-t-xl w-full h-[169px] object-cover" />
-      <div className="p-3">
+    <div className="bg-card text-card-foreground rounded-xl border border-border w-[300px] hover:cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all overflow-hidden relative z-10">
+      <img src={thumbnail} alt="Thumbnail" className="rounded-t-xl w-full h-[169px] object-cover " />
+      <div className="p-3 ">
         <h1 className="text-[14px] font-medium mb-3 line-clamp-2 h-[40px]">{title}</h1>
         <div className="flex items-center gap-1.5 mb-4">
           <Avatar>
@@ -47,6 +47,7 @@ const VideoCard = ({
           </div>
         </div>
       </div>
+      <div className="absolute rounded-full w-[200px] h-[200px] bg-[#ddd] -top-[50px] -left-[50px] blur-3xl opacity-20 z-5"></div>
     </div>
   );
 };

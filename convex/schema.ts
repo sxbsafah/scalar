@@ -11,7 +11,7 @@ export default defineSchema({
     username: v.string(),
     stripeCustomerId: v.string(),
     defaultWorkSpace: v.id("workspaces"),
-    activeSubscriptionId: v.optional(v.string()),
+    activeSubscriptionId: v.optional(v.id("subscriptions")),
     workspaces: v.array(v.id("workspaces")),
     profileImageUrl: v.string(),
   }),
@@ -22,6 +22,7 @@ export default defineSchema({
     startingDate: v.number(),
     endingDate: v.number(),
     planType: v.union(v.literal("month"), v.literal("year")),
+    cancelAtPeriodEnd: v.boolean(),
   }),
   workspaces: defineTable({
     name: v.string(),
