@@ -1,21 +1,22 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { XIcon, Upload, File } from "lucide-react";
 import { Button } from "./ui/button";
+import { useState } from "react";
 
 
 type FileUploadProps = {
   setFile: React.Dispatch<React.SetStateAction<File | null>>;
 }
+type UploadStatus = "idle" | "success" | "uploading" | "error";
 
 const FileUpload = ({ setFile }: FileUploadProps) => {
-
-
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const [status, setStatus] = useState<UploadStatus>("idle");
     if (e.target.files) {
       setFile(e.target.files[0]);
     }
+
   }
-  
   return (
     <>
       <div className="flex items-center justify-between border-b-border border-b px-2 py-1">
