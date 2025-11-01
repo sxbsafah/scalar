@@ -38,7 +38,9 @@ export default defineSchema({
   }),
   notifications: defineTable({
     userId: v.id("users"),
-    message: v.string(),
+    workspace: v.id("workspaces"),
+    destination: v.id("users"),
+    timestamp: v.number(),
   }),
   videos: defineTable({
     title: v.string(),

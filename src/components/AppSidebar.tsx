@@ -30,6 +30,9 @@ import { Skeleton } from "./ui/skeleton";
 import { useAuth } from "@clerk/clerk-react";
 import React from "react";
 import { Spinner } from "./ui/spinner";
+import Invite from "./Invite";
+
+
 
 const AppSidebar = ({
   workspace,
@@ -45,6 +48,9 @@ const AppSidebar = ({
   const user = useQuery(api.users.getUserByClerkId, {
     clerkId: userIdentity.userId as string,
   });
+  const users = useQuery(api.users.getAllUsers, workspace ? {
+    workspace: workspace?._id,
+  }: "skip");
   const [open, setOpen] = React.useState(false);
   const [isProcessing, setIsProcessing] = React.useState(false);
   const handleUpgrade = async (plan: "month" | "year") => {
@@ -131,7 +137,7 @@ const AppSidebar = ({
                     setWorkspace(workspace);
                     setOpen(false);
                   }}
-                  className="w-full h-auto justify-start px-2 py-1 rounded-xs font-normal line-clamp-1"
+                  className="w-full flex px-2 py-1 rounded-xs font-normal line-clamp-1 text-left"
                 >
                   {`${workspace?.name}'s Workspace`}
                 </Button>
@@ -139,14 +145,16 @@ const AppSidebar = ({
             </div>
           </CollapsibleContent>
         </Collapsible>
-        {workspaces ? (
-          <Button
-            size={"sm"}
-            className={"h-auto px-2 py-1 font-semibold gap-1.5 text-[12px] "}
-          >
-            Invite To Workspace
-            <Plus width={12} height={12} className="text-primary-foreground" />
-          </Button>
+        {workspaces && users ? (
+          <Invite users={users} workspaceId={workspace?._id}>
+            <Button
+              size={"sm"}
+              className={"h-auto px-2 py-1 font-semibold gap-1.5 text-[12px] w-full"}
+            >
+              Invite To Workspace
+              <Plus width={12} height={12} className="text-primary-foreground" />
+            </Button>
+          </Invite>
         ) : (
           <Skeleton className="h-4 w-full rounded-xl" />
         )}
@@ -162,14 +170,16 @@ const AppSidebar = ({
             <SidebarMenu className={""}>
               {workspaces
                 ? navigationItems.map((item) => (
-                    <SidebarMenuItem key={item.title}>
+                  <SidebarMenuItem key={item.title}>
+                    <Link to={item.to}>
                       <SidebarMenuButton
                         isActive={location.pathname === item.to}
                         className="text-muted-foreground font-semibold"
                       >
                         {item.icon}
-                        <Link to={item.to}>{item.title}</Link>
+                        {item.title}
                       </SidebarMenuButton>
+                    </Link>
                     </SidebarMenuItem>
                   ))
                 : navigationItems.map((item) => (

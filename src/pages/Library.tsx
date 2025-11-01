@@ -122,7 +122,7 @@ const Library = () => {
     <>
       <ClerkLoaded>
         <div className="flex flex-col ">
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex justify-between items-center ">
             <Title Title={"Folders"} subTitle={"Manage your folders"} />
             <Dialog>
               <DialogTrigger asChild>

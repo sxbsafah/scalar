@@ -1,8 +1,6 @@
 import { ConvexError } from "convex/values";
-import { action, mutation, query } from "./_generated/server"
+import { mutation, query } from "./_generated/server"
 import { v } from "convex/values";
-import { api } from "./_generated/api";
-import stripe from "../src/lib/stripe";
 
 export const getSubscriptionById = query({
   args: {
@@ -82,23 +80,17 @@ export const deleteSubscription = mutation({
 })
 
 
-export const createBillingPortalSession = action({
+export const getSubscription = query({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new ConvexError("User Identity Is Uknown");
+      throw new ConvexError("User Identity is Uknown");
     }
-    const user = await ctx.runQuery(api.users.getUserByClerkId, {
-      clerkId: identity.subject
-    })
+    const user = await ctx.db.query("users").filter(q => q.eq(q.field("clerkId"), identity.subject)).first();
     if (!user) {
       throw new ConvexError("User Not Found");
     }
-    const session = await stripe.billingPortal.sessions.create({
-      customer: user.stripeCustomerId,
-      return_url: `${process.env.VITE_PUBLIC_URL}/billing`,
-    })
-    return { url: session.url }
+    return { subscription: user.activeSubscriptionId ? await ctx.db.get(user.activeSubscriptionId) : undefined };
   }
 })

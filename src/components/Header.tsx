@@ -2,9 +2,15 @@ import { UserButton } from "@clerk/clerk-react";
 import { Button } from "./ui/button";
 import { Upload, Video } from "lucide-react";
 import { Input } from "./ui/input";
+import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
+import FileUpload from "./FileUpload";
+import { useState } from "react";
+
+
 
 const Header = () => {
-  // Implementing Vector Search 
+  const [file, setFile] = useState<File | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
   return (
     <header className="flex items-center justify-between py-4 w-full mb-12">
       <div>
@@ -16,12 +22,32 @@ const Header = () => {
             <Video />
             Record
           </Button>
-          <Button size="sm">
-            <Upload />
-            Record
-          </Button>
+          <Dialog open={isOpen} onOpenChange={() => {
+            if (!isOpen) {
+              setFile(null);
+              setIsOpen(true);
+            } else {
+              setIsOpen(false);
+            }
+          }}>
+            <DialogTrigger>
+              <Button size="sm">
+                <Upload />
+                Upload
+              </Button>
+            </DialogTrigger>
+            <DialogContent showCloseButton={false} custom={true}>
+              {!file ? (
+                <FileUpload  setFile={setFile} />
+              ) : (
+                  <div className="asdfadsf">
+                    {file.size}
+                  </div>
+              )}
+            </DialogContent>
+          </Dialog>
         </div>
-          <UserButton />
+        <UserButton />
       </div>
     </header>
   );

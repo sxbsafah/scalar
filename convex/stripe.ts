@@ -49,3 +49,24 @@ export const createPremiumCheckoutSession = action({
     return { checkout_url: session.url };
   },
 });
+
+export const createBillingPortalSession = action({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("User Identity Is Uknown");
+    }
+    const user = await ctx.runQuery(api.users.getUserByClerkId, {
+      clerkId: identity.subject
+    })
+    if (!user) {
+      throw new ConvexError("User Not Found");
+    }
+    const session = await stripe.billingPortal.sessions.create({
+      customer: user.stripeCustomerId,
+      return_url: `${process.env.VITE_PUBLIC_URL}/billing`,
+    })
+    return { portal_url: session.url }
+  }
+})

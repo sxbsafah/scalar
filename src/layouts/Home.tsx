@@ -10,6 +10,7 @@ import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Toaster } from "@/components/ui/sonner";
 
 const Home = () => {
   const userIdentity = useAuth();
@@ -20,7 +21,7 @@ const Home = () => {
   const [workspace, setWorkspace] = useState<Doc<"workspaces"> | null>(null);
 
   useEffect(() => {
-    if (workspaces && user &&!workspace) {
+    if (workspaces && user && !workspace) {
       setWorkspace(
         workspaces.find(
           (workspace) => workspace?._id === user.defaultWorkSpace
@@ -44,7 +45,7 @@ const Home = () => {
               setWorkspace={setWorkspace}
               workspaces={workspaces}
             />
-            <main className="px-5 grow">
+            <main className="px-5 grow h-screen overflow-y-auto flex flex-col">
               {workspace ? (
                 <Header />
               ) : (
@@ -68,6 +69,7 @@ const Home = () => {
           </SidebarProvider>
         </div>
       </ClerkLoaded>
+      <Toaster />
     </>
   );
 };

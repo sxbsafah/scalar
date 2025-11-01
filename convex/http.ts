@@ -4,7 +4,6 @@ import { Webhook } from "svix";
 import { type WebhookEvent } from "@clerk/backend";
 import stripe from "../src/lib/stripe";
 import { api } from "./_generated/api";
-import  { Stripe } from "stripe"
 import { ConvexError } from "convex/values";
 
 
@@ -107,7 +106,7 @@ http.route({
           startingDate: event.data.object.items.data[0].current_period_start as number,
           endingDate: event.data.object.items.data[0].current_period_end as number,
           planType: event.data.object.items.data[0].price.recurring?.interval as "month" | "year",
-          cancelAtPeriodEnd: event.data.object.cancel_at_period_end,
+          cancelAtPeriodEnd: event.data.object.cancel_at ? true : false,
         })
       } else if (event.type === "customer.subscription.deleted") {
         await ctx.runMutation(api.subscriptions.deleteSubscription, {

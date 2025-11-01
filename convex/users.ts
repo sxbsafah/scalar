@@ -39,6 +39,10 @@ export const createUser = mutation({
     })
     await ctx.db.patch(folderId, { workspaceId: workspaceId });
     await ctx.db.patch(workspaceId, { admin: userId });
+    await ctx.db.insert("memberships", {
+      userId: userId,
+      workspaceId: workspaceId,
+    })
     return userId;
   }
 })
@@ -102,3 +106,19 @@ export const getUserById = query({
     return await ctx.db.get(userId);
   }
 })
+
+
+export const getAllUsers = query({
+  args: {
+    workspace: v.id("workspaces"),
+  },
+  handler: async (ctx,{ workspace }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("User Is Uknown")
+    }
+    const filteredUsers = (await ctx.db.query("users").collect()).filter(user => user.clerkId !== identity.subject);
+    return await Promise.all(filteredUsers.map(async user => ({ username: user.username,profileImageUrl: user.profileImageUrl, plan: user.activeSubscriptionId ? "pro": "free" as "free" | "pro", userId: user._id, isInvited: await ctx.db.query("notifications").filter(q => q.eq(q.field("destination"), user._id)).filter(q => q.eq(q.field("workspace"), workspace)).first() ? true : false  }) ));
+  }
+})
+
