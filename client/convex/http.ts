@@ -5,8 +5,11 @@ import { type WebhookEvent } from "@clerk/backend";
 import stripe from "../src/lib/stripe";
 import { api } from "./_generated/api";
 import { ConvexError } from "convex/values";
-
-
+import { VIDEO_LIMITS } from "@/constants/constant";
+import { type VideoMetadata, type ValidationResult } from "@/types/video";
+import { validateVideoMetadata } from "@/lib/validateVideoMetaData";
+import { checkVideoLimits } from "@/lib/checkVideoLimits";
+import { Id } from "./_generated/dataModel";
 
 
 const http = httpRouter();
@@ -17,7 +20,9 @@ http.route({
   handler: httpAction(async (ctx, request) => {
     const clerkWebhookSecret = process.env.CLERK_WEBHOOK_SECRET;
     if (!clerkWebhookSecret) {
-      return new Response("CLERK_WEBHOOK_SECRET not configured", { status: 500 });
+      return new Response("CLERK_WEBHOOK_SECRET not configured", {
+        status: 500,
+      });
     }
     const svix_id = request.headers.get("svix-id")!;
     const svix_timestamp = request.headers.get("svix-timestamp")!;
@@ -35,20 +40,30 @@ http.route({
         "svix-timestamp": svix_timestamp,
       }) as WebhookEvent;
       if (event.type === "user.created" || event.type === "user.updated") {
-        const { email_addresses, primary_email_address_id, username, id, first_name, last_name, image_url } = event.data;
-        const primaryEmailAddress = email_addresses.find(email => email.id === primary_email_address_id)?.email_address
+        const {
+          email_addresses,
+          primary_email_address_id,
+          username,
+          id,
+          first_name,
+          last_name,
+          image_url,
+        } = event.data;
+        const primaryEmailAddress = email_addresses.find(
+          (email) => email.id === primary_email_address_id
+        )?.email_address;
         if (event.type === "user.created") {
           const customer = await stripe.customers.create({
             name: `${first_name} ${last_name}`.trim(),
             email: primaryEmailAddress,
             metadata: {
               clerkId: id,
-            }
+            },
           });
           await ctx.runMutation(api.users.createUser, {
             clerkId: id,
             email: primaryEmailAddress as string,
-            name: `${first_name} ${last_name ? last_name: ""}`.trim(),
+            name: `${first_name} ${last_name ? last_name : ""}`.trim(),
             stripeCustomerId: customer.id,
             username: username as string,
             profileImageUrl: image_url,
@@ -59,13 +74,12 @@ http.route({
             name: `${first_name} ${last_name ? last_name : ""}`.trim(),
             username: username as string,
             clerkId: id,
-          })
+          });
         }
       } else if (event.type === "user.deleted") {
         await ctx.runMutation(api.users.deleteUserByClerkId, {
           clerkId: event.data.id as string,
-        })
-
+        });
       }
     } catch (err) {
       throw new Error((err as Error).message);
@@ -73,8 +87,6 @@ http.route({
     return new Response("Success", { status: 200 });
   }),
 });
-
-
 
 http.route({
   path: "/stripe-webhook",
@@ -84,42 +96,119 @@ http.route({
     if (!stripeWebhookSecret) {
       return new Response("Stripe Web Hook Secret", {
         status: 500,
-      })
+      });
     }
     const stripeSignature = request.headers.get("stripe-signature");
     if (!stripeSignature) {
       return new Response("Stripe Signature Header is absent", {
         status: 400,
-      })
+      });
     }
     const payload = await request.text();
     try {
-      const event = await stripe.webhooks.constructEventAsync(payload, stripeSignature, stripeWebhookSecret)
-      if (event.type === "customer.subscription.created" || event.type === "customer.subscription.updated") {
-        if (!event.data.object.latest_invoice || event.data.object.status !== "active") {
-          return new Response("Payment Failed")
+      const event = await stripe.webhooks.constructEventAsync(
+        payload,
+        stripeSignature,
+        stripeWebhookSecret
+      );
+      if (
+        event.type === "customer.subscription.created" ||
+        event.type === "customer.subscription.updated"
+      ) {
+        if (
+          !event.data.object.latest_invoice ||
+          event.data.object.status !== "active"
+        ) {
+          return new Response("Payment Failed");
         }
         await ctx.runMutation(api.subscriptions.upsertSubscription, {
           clerkId: event.data.object.metadata.clerkId,
           stripeSubscriptionId: event.data.object.id,
           status: event.data.object.status,
-          startingDate: event.data.object.items.data[0].current_period_start as number,
-          endingDate: event.data.object.items.data[0].current_period_end as number,
-          planType: event.data.object.items.data[0].price.recurring?.interval as "month" | "year",
+          startingDate: event.data.object.items.data[0]
+            .current_period_start as number,
+          endingDate: event.data.object.items.data[0]
+            .current_period_end as number,
+          planType: event.data.object.items.data[0].price.recurring
+            ?.interval as "month" | "year",
           cancelAtPeriodEnd: event.data.object.cancel_at ? true : false,
-        })
+        });
       } else if (event.type === "customer.subscription.deleted") {
         await ctx.runMutation(api.subscriptions.deleteSubscription, {
           stripeSubscriptionId: event.data.object.id,
-        })
+        });
       }
     } catch (error) {
       throw new ConvexError((error as Error).message);
     }
     return new Response("Route Handeld Succefuly", {
-      status: 200
+      status: 200,
+    });
+  }),
+});
+
+http.route({
+  path: "/get-user-video-upload-permission",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const metadata = (await req.json()) as Partial<VideoMetadata>;
+    const metadataValidation: ValidationResult = validateVideoMetadata(metadata);
+    if (!metadataValidation.isValid) {
+      return new Response(JSON.stringify({
+        error: metadataValidation.error,
+      }), { status: 400 });
+    }
+    const { duration, width, height, clerkId } = metadata as VideoMetadata;
+    const user = await ctx.runQuery(api.users.getUserByClerkId, { clerkId });
+    if (!user) {
+      return new Response(
+        JSON.stringify({ error: "User not found" }),
+        { status: 404 }
+      );
+    }
+    const folder = await ctx.runQuery(api.folders.getFolderByIdandWorkspaceId, {
+      workspaceId: metadata.workspaceId as Id<"workspaces">,
+      folderId: metadata.folderId as Id<"folders">,
     })
-  })
-})
+    if (!folder) {
+      return new Response(
+        JSON.stringify({ error: "Folder not found" }),
+        { status: 404 }
+      );
+    }
+    const videos = await ctx.runQuery(api.videos.getVideosByFolderId, {
+      folderId: folder._id,
+    })
+    if (!videos) {
+      return new Response(
+        JSON.stringify({ error: "Failed Chekcing Videos" }),
+        { status: 404 }
+      );
+    }
+    if (videos.some(video => video.title === metadata.title)) {
+      return new Response(
+        JSON.stringify({ error: "Video with this title already exist" }),
+        { status: 400 }
+      );
+    }
+    const isPremium = !!user.activeSubscriptionId;
+    const limitCheck = checkVideoLimits(duration, width, height, isPremium);
+    if (!limitCheck.isValid) {
+      return new Response(JSON.stringify({
+        error: limitCheck.error,
+        isPremium,
+        limits: isPremium ? VIDEO_LIMITS.PREMIUM : VIDEO_LIMITS.FREE,
+      }), { status: 400 });
+    }
+    return new Response(
+      JSON.stringify({
+        isPermissionGranted: true,
+        isPremium,
+        limits: isPremium ? VIDEO_LIMITS.PREMIUM : VIDEO_LIMITS.FREE,
+      }),
+      { status: 200 }
+    );
+  }),
+});
 
 export default http;

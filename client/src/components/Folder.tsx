@@ -10,7 +10,7 @@ type FolderProps = {
 
 const Folder = ({ folderName,  videosCount, onClick }: FolderProps) => {
   return (
-    <button className="px-4 py-2 border border-border bg-card flex rounded-sm justify-between items-center w-[200px] relative overflow-hidden hover:cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all text-start" onClick={onClick}>
+    <button className="px-4 py-2 w-full border border-border bg-card flex rounded-sm justify-between items-center  relative overflow-hidden hover:cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all text-start" onClick={onClick}>
       <div>
         <h4 className="font-semibold text-[14px]  text-card-foreground truncate max-w-[16ch]">{folderName}</h4>
         <h5 className="text-muted-foreground text-xs capitalize">{videosCount} videos</h5>

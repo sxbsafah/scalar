@@ -1,5 +1,5 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { Group, XIcon, ImageUp } from "lucide-react";
+import { Group, XIcon, ImageUp, Folder } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {  z } from "zod";
@@ -45,7 +45,7 @@ const VideoForm = ({ file }: { file: File }) => {
   });
 
   const onSubmit = (data: VideoSchemaType) => {
-    console.log(data);
+    
   };
 
   return (
@@ -212,7 +212,7 @@ const VideoForm = ({ file }: { file: File }) => {
                         value={field.value}
                       >
                         <SelectTrigger className="w-full flex border-input border gap-2 px-3 py-2 rounded-md bg-input/20">
-                          <Group />
+                          <Folder />
                           <SelectValue placeholder="Select a folder" />
                         </SelectTrigger>
                         <SelectContent>

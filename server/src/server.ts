@@ -1,8 +1,6 @@
-import express from "express";
-import { config } from "@/config/config";
+import express, { type Request, type Response } from "express";
+import { config } from "@/config/config.js";
 import cors from "cors";
-
-
 
 
 const app = express();
@@ -17,9 +15,16 @@ app.use(cors({
       callback(new Error("Not allowed by CORS"));
     }
   }
-}))
+}));
 
+app.get("/", (request: Request,response: Response) => {
+  return response.status(200).json({
+    status: "server is running succeffuly"
+  })
+})
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+

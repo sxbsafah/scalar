@@ -2,7 +2,7 @@ import { Skeleton } from "./ui/skeleton";
 
 const VideoCardSkeleton = () => {
   return (
-    <div className="bg-card text-card-foreground rounded-xl border border-border w-[300px]">
+    <div className="bg-card text-card-foreground rounded-xl border border-border w-full">
       {/* Thumbnail placeholder */}
       <Skeleton className="w-full h-[169px] rounded-t-xl" />
 

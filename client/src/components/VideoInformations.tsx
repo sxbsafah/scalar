@@ -12,7 +12,7 @@ const VideoInformations = ({ file, thumbnail }: VideoInformationsProps) => {
             src={URL.createObjectURL(thumbnail)}
             alt="Thumbnail preview"
             className="w-full h-full object-cover rounded-lg"
-          />
+          />  
         ) : (
           <h1 className="text-primary font-bold text-2xl">Thumbnail</h1>
         )}

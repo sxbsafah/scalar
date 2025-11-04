@@ -25,9 +25,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import VideoCard from "@/components/VideoCard";
 import { motion } from "motion/react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import FoldersSkeletonLoading from "@/components/FoldersSkeletonLoading";
-import { Doc, Id } from "../../convex/_generated/dataModel";
+import { Id } from "../../convex/_generated/dataModel";
 import VideoCardSkeleton from "@/components/VideCardSkeleton";
 
 export const folderSchema = z.object({
@@ -38,9 +38,8 @@ type FolderType = z.infer<typeof folderSchema>;
 
 const Library = () => {
   const [folder, setFolder] = useState<Id<"folders"> | undefined>(undefined);
-  const [initialAnimation, setInitialAnimation] = useState(true);
-  const workspaceRef = useRef<Doc<"workspaces"> | null>(null);
-  const foldersRef = useRef<Doc<"folders">[] | undefined>(undefined);
+  const [initialFoldersAnimation, setInitialFoldersAnimation] = useState(true);
+  const [initialVideosAnimation, setInitialVideosAnimation] = useState(true);
   const workspace = useWorkspace();
   const folders = useQuery(
     api.folders.getFoldersByWorkspaceId,
@@ -63,23 +62,21 @@ const Library = () => {
       setFolder(workspace.defaultFolder);
     }
   }, [workspace]);
-  useEffect(() => {
-    console.log(videos);
-  }, [folder]);
 
   useEffect(() => {
-    if (!workspace && !folders) return;
-    const hasWorkspaceChanged = workspaceRef.current?._id !== workspace?._id;
-    const hasFoldersChanged =
-      JSON.stringify(foldersRef.current) !== JSON.stringify(folders);
-    if (hasWorkspaceChanged && hasFoldersChanged) {
-      setInitialAnimation(true);
-    } else {
-      setInitialAnimation(false);
-    }
-    workspaceRef.current = workspace;
-    foldersRef.current = folders;
-  }, [folders, workspace]);
+    if (!folder) return;
+    setInitialFoldersAnimation(true);
+    const id = setTimeout(() => setInitialFoldersAnimation(false), 0);
+    return () => clearTimeout(id);
+  }, [workspace]);
+  useEffect(() => {
+    if (!folder) return;
+    setInitialVideosAnimation(true);
+    const id = setTimeout(() => setInitialVideosAnimation(false), 0);
+    return () => clearTimeout(id);
+  }, [folder]);
+
+
   const {
     handleSubmit,
     setError,
@@ -185,7 +182,7 @@ const Library = () => {
               </DialogContent>
             </Dialog>
           </div>
-          <div className="flex flex-wrap items-start gap-2 mb-10">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2 mb-10">
             {folders ? (
               folders.map((folder, idx) => (
                 <motion.div
@@ -195,7 +192,7 @@ const Library = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{
                     duration: 0.1,
-                    delay: initialAnimation ? idx * 0.1 : 0,
+                    delay: initialFoldersAnimation ? idx * 0.1 : 0,
                     ease: [0.4, 0, 0.2, 1],
                   }}
                 >
@@ -225,7 +222,7 @@ const Library = () => {
             <Title Title={"Videos"} subTitle={"Manage Your Videos"} />
           </div>
           <div
-            className={`${videos?.length !== 0 || videos === undefined ? "flex flex-wrap items-start gap-2" : "flex flex-col grow items-center"}`}
+            className={`${videos?.length !== 0 || videos === undefined ? "grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] items-start gap-2" : "flex flex-col grow items-center"}`}
           >
             {videos === undefined ? (
               <>
@@ -248,7 +245,7 @@ const Library = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{
                     duration: 0.5,
-                    delay: initialAnimation ? idx * 0.1 : 0,
+                    delay: initialVideosAnimation ? idx * 0.1 : 0,
                     ease: [0.4, 0, 0.2, 1],
                   }}
                 >

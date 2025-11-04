@@ -8,7 +8,6 @@ import { useState } from "react";
 import VideoForm from "./VideoForm";
 import { DialogTitle } from "@/components/ui/dialog";
 
-// type UploadStatus = "idle" | "success" | "uploading" | "error";
 
 
 const Header = () => {
