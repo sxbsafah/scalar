@@ -1,26 +1,22 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { XIcon, Upload, File } from "lucide-react";
 import { Button } from "./ui/button";
-import { useState } from "react";
 
 
 type FileUploadProps = {
   setFile: React.Dispatch<React.SetStateAction<File | null>>;
 }
-type UploadStatus = "idle" | "success" | "uploading" | "error";
 
 const FileUpload = ({ setFile }: FileUploadProps) => {
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const [status, setStatus] = useState<UploadStatus>("idle");
     if (e.target.files) {
       setFile(e.target.files[0]);
     }
-
   }
   return (
     <>
       <div className="flex items-center justify-between border-b-border border-b px-2 py-1">
-        <h1 className="font-fold text-card-foreground">File Upload</h1>
+        <h1 className="font-semibold text-card-foreground">Upload Video</h1>
         <DialogPrimitive.Close
           data-slot="dialog-close"
           className={`ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4`}

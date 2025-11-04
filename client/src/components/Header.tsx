@@ -5,12 +5,15 @@ import { Input } from "./ui/input";
 import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
 import FileUpload from "./FileUpload";
 import { useState } from "react";
+import VideoForm from "./VideoForm";
+import { DialogTitle } from "@/components/ui/dialog";
 
+// type UploadStatus = "idle" | "success" | "uploading" | "error";
 
 
 const Header = () => {
   const [file, setFile] = useState<File | null>(null);
-  const [isOpen, setIsOpen] = useState(false);
+
   return (
     <header className="flex items-center justify-between py-4 w-full mb-12">
       <div>
@@ -22,14 +25,7 @@ const Header = () => {
             <Video />
             Record
           </Button>
-          <Dialog open={isOpen} onOpenChange={() => {
-            if (!isOpen) {
-              setFile(null);
-              setIsOpen(true);
-            } else {
-              setIsOpen(false);
-            }
-          }}>
+          <Dialog>
             <DialogTrigger>
               <Button size="sm">
                 <Upload />
@@ -38,11 +34,15 @@ const Header = () => {
             </DialogTrigger>
             <DialogContent showCloseButton={false} custom={true}>
               {!file ? (
-                <FileUpload  setFile={setFile} />
+                <>
+                  <DialogTitle className="sr-only">File Uploading</DialogTitle>
+                  <FileUpload  setFile={setFile} />
+                </>
               ) : (
-                  <div className="asdfadsf">
-                    {file.size}
-                  </div>
+                  <>
+                    <DialogTitle className="sr-only">Video Form</DialogTitle>
+                    <VideoForm file={file} />
+                  </>
               )}
             </DialogContent>
           </Dialog>

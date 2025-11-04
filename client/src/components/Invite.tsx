@@ -19,7 +19,7 @@ import { toast } from "sonner";
 type InviteProps = {
   children: React.ReactNode;
   users?: { username: string; profileImageUrl: string; plan: "pro" | "free", userId: Id<"users">, isInvited: boolean }[];
-  workspaceId: Id<"workspaces">;
+  workspaceId?: Id<"workspaces">;
 };
 
 const Invite = ({ children, users, workspaceId }: InviteProps) => {

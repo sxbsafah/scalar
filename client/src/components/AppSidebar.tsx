@@ -78,7 +78,7 @@ const AppSidebar = ({
             <Skeleton className="size-8 rounded-md" />
 
             {/* Text placeholder */}
-            <Skeleton className="h-[32px] w-[100px] rounded-sm" />
+            <Skeleton className="h-8 w-[100px] rounded-sm" />
           </div>
         )}
         <Collapsible
@@ -119,7 +119,7 @@ const AppSidebar = ({
             ) : (
               <div className="flex items-center justify-between py-0.5">
                 {/* Workspace name placeholder */}
-                <Skeleton className="h-[16px] w-[120px] rounded-md" />
+                <Skeleton className="h-4 w-[120px] rounded-md" />
 
                 {/* Chevron icon placeholder */}
                 <Skeleton className="size-6 rounded-md" />
@@ -235,7 +235,7 @@ const AppSidebar = ({
               "p-4 bg-card rounded-2xl relative overflow-hidden broder-border border"
             }
           >
-            <Button variant={"outline"} size={"icon"} className="mb-[12px]">
+            <Button variant={"outline"} size={"icon"} className="mb-3">
               <Zap />
             </Button>
             <h5 className="text-[12px] text-primary font-semibold mb-1">
@@ -264,13 +264,13 @@ const AppSidebar = ({
         ) : user && user.activeSubscriptionId ? null : (
           <div className="p-4 bg-card rounded-2xl relative overflow-hidden border border-border">
             {/* Icon Button */}
-            <Skeleton className="h-9 w-9 mb-[12px] rounded-md" />
+            <Skeleton className="h-9 w-9 mb-3 rounded-md" />
 
             {/* Title */}
             <Skeleton className="h-[18px] w-[90px] mb-1 rounded-sm" />
 
             {/* Description */}
-            <Skeleton className="h-[32px] w-full mb-4 rounded-sm" />
+            <Skeleton className="h-8 w-full mb-4 rounded-sm" />
 
             {/* Button */}
             <Skeleton className="h-9 w-full rounded-md" />
