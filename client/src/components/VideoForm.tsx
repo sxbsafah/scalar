@@ -1,8 +1,5 @@
-import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Group, XIcon, ImageUp, Folder } from "lucide-react";
-import { Controller, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {  z } from "zod";
+import { Controller } from "react-hook-form";
 import { Input } from "./ui/input";
 import {
   Select,
@@ -12,53 +9,209 @@ import {
   SelectValue,
   SelectTrigger,
 } from "./ui/select";
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "./ui/field";
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "./ui/field";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "./ui/button";
 import VideoInformations from "./VideoInformations";
-import { useState } from "react";
+import { SetStateAction } from "react";
+import { isAllowedVideo } from "@/lib/isAllowedVideo";
+import { isAllowedImage } from "@/lib/isAllowedImage";
+import { Doc, Id } from "../../convex/_generated/dataModel";
+import { useAction, useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { Spinner } from "./ui/spinner";
+import { type VideoMetadata } from "@/lib/getVideoMetaData";
+import useConvexUser from "@/hooks/useConvexUser";
+import axios from "axios";
+import { UseFormHandleSubmit, Control, UseFormSetError } from "react-hook-form";
+import { VideoSchemaType } from "@/components/Header";
+import { FieldErrors } from "react-hook-form";
 
-const videoSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  thumbnail: z
-    .any()
-    .refine(
-      (file) => file instanceof File || file?.[0] instanceof File,
-      "Thumbnail is required"
-    ),
-  workspace: z.string().min(1, "Workspace is required"),
-  folders: z.string().min(1, "Folder is required"),
-});
+const VideoForm = ({
+  file,
+  workspaces,
+  videoMetaData,
+  handleSubmit,
+  control,
+  isSubmitting,
+  errors,
+  setError,
+  thumbnail,
+  setThumbnail,
+  title,
+  setTitle,
+  selectedWorkspace,
+  setSelectedWorkspace,
+  uploadProgress,
+  setUploadProgress,
+  onClose,
+  onReset,
+}: {
+  file: File;
+  workspaces: (Doc<"workspaces"> | null)[];
+  videoMetaData: VideoMetadata;
+  handleSubmit: UseFormHandleSubmit<VideoSchemaType, VideoSchemaType>;
+  control: Control<VideoSchemaType, unknown, VideoSchemaType>;
+  isSubmitting: boolean;
+  errors: FieldErrors<{ title: string; thumbnail: unknown; workspace: string; folders: string; file?: string | undefined; }>;
+  setError: UseFormSetError<VideoSchemaType>;
+  thumbnail: File | null;
+  setThumbnail: React.Dispatch<SetStateAction<File | null>>;
+  title: string;
+  setTitle: React.Dispatch<SetStateAction<string>>;
+  selectedWorkspace: Id<"workspaces"> | null;
+  setSelectedWorkspace: React.Dispatch<SetStateAction<Id<"workspaces"> | null>>;
+  uploadProgress: number;
+  setUploadProgress: React.Dispatch<SetStateAction<number>>;
+  onClose: () => void;
+  onReset: () => void;
+}) => {
+  const user = useConvexUser();
+  const folders = useQuery(
+    api.folders.getFoldersByWorkspaceId,
+    selectedWorkspace
+      ? {
+          workspaceId: selectedWorkspace,
+        }
+      : "skip"
+  );
 
-type VideoSchemaType = z.infer<typeof videoSchema>;
+  const requestSignedUrl = useAction(api.node.getSignedUploadUrl);
+  const createVideo = useAction(api.node.createVideo);
 
-const VideoForm = ({ file }: { file: File }) => {
-  const [thumbnail, setThumbnail] = useState<File | null>(null);
-  const { handleSubmit, control } = useForm<VideoSchemaType>({
-    resolver: zodResolver(videoSchema),
-  });
+  const onSubmit = async (data: VideoSchemaType) => {
+    if (!file) {
+      setError("file", { message: "Video file is required" });
+      return;
+    }
+    if (!isAllowedVideo(file)) {
+      setError("file", { message: "Unsupported video format" });
+      return;
+    }
+    if (file.size > 1024 * 1024 * 1024) {
+      setError("file", { message: "Video must not exceed 1GB" });
+      return;
+    }
+    if (!isAllowedImage(data.thumbnail)) {
+      setError("thumbnail", {
+        message: "Unsupported image format",
+      });
+      return;
+    }
+    if (data.thumbnail.size > 1024 * 1024 * 2) {
+      setError("thumbnail", {
+        message: "Image size must not exceed 2MB",
+      });
+      return;
+    }
+    if (user) {
+      if (user.activeSubscriptionId) {
+        if (videoMetaData.duration > 60 * 10) {
+          setError("file", {
+            message: "Video duration must be at most 10min",
+          });
+          return;
+        }
+        if (videoMetaData.height > 1080 && videoMetaData.width > 1920) {
+          setError("file", {
+            message: "Video Resolution must be at most 1920x1080",
+          });
+          return;
+        }
+      } else {
+        if (videoMetaData.duration > 60 * 5) {
+          setError("file", {
+            message: "Video duration must be at most 5min",
+          });
+          return;
+        }
+        if (videoMetaData.height > 720 && videoMetaData.width > 1280) {
+          setError("file", {
+            message: "Video Resolution must be at most 1280x720",
+          });
+          return;
+        }
+      }
+      try {
+        const thumbnailSignature = await requestSignedUrl();
+        const thumbnailFormData = new FormData();
+        thumbnailFormData.append(
+          "timestamp",
+          thumbnailSignature.timestamp.toString()
+        );
+        thumbnailFormData.append("signature", thumbnailSignature.signature);
+        thumbnailFormData.append("file", data.thumbnail);
+        thumbnailFormData.append("timestamp", thumbnailSignature.timestamp.toString());
+        thumbnailFormData.append("api_key", import.meta.env.VITE_CLOUDINARY_API_KEY);
 
-  const onSubmit = (data: VideoSchemaType) => {
-    
+        const videoSignature = await requestSignedUrl();
+        const videoFormData = new FormData();
+        videoFormData.append("timestamp", videoSignature.timestamp.toString());
+        videoFormData.append("signature", videoSignature.signature);
+        videoFormData.append("file", file);
+        videoFormData.append("api_key", import.meta.env.VITE_CLOUDINARY_API_KEY);
+        
+
+        console.log(import.meta.env.VITE_CLOUDINARY_CLOUD_NAME);
+        console.log(import.meta.env.VITE_CLOUDINARY_API_KEY);
+        console.log(videoSignature.signature)
+        console.log(videoSignature.timestamp.toString());
+        const videoResponse = await axios.post(
+          `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/video/upload`,
+          videoFormData,
+          {
+            onUploadProgress: (progressEvent) => {
+              const progress = Math.round(
+                (progressEvent.loaded / progressEvent.total!) * 100
+              );
+              setUploadProgress(progress);
+            },
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+        const thumbnailResponse = await axios.post(
+          `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`,
+          thumbnailFormData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+        console.log("starting creating video")
+        await createVideo({
+          videoPublicId: videoResponse.data.public_id,
+          thumbnailPublicId: thumbnailResponse.data.public_id,
+          title: data.title,
+          workspace: data.workspace as Id<"workspaces">,
+          folder: data.folders as Id<"folders">,
+        });
+        // Success! Reset and close
+        onReset();
+        onClose();
+      } catch (error) {
+        setError("file", {
+          message: (error as Error).message,
+        });
+      } finally {
+        setUploadProgress(0);
+      }
+    }
   };
 
   return (
     <div className="flex flex-col justify-between">
       <div className="flex items-center justify-between border-b-border border-b px-2 py-1">
         <h1 className="font-bold text-card-foreground">Upload Video</h1>
-        <DialogPrimitive.Close
-          data-slot="dialog-close"
-          className={`ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4`}
+        <button
+          onClick={onClose}
+          className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none"
         >
-          <XIcon />
+          <XIcon className="w-4 h-4" />
           <span className="sr-only">Close</span>
-        </DialogPrimitive.Close>
+        </button>
       </div>
 
       <div className="w-[900px] px-8 py-3">
@@ -66,15 +219,13 @@ const VideoForm = ({ file }: { file: File }) => {
         <form onSubmit={handleSubmit(onSubmit)}>
           <FieldGroup>
             <div className="flex gap-6">
-              {/* LEFT COLUMN */}
               <div className="w-1/2">
-                {/* --- Title --- */}
                 <Controller
                   name="title"
                   control={control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid}>
-                      <div className="flex flex-col ">
+                      <div className="flex flex-col">
                         <FieldLabel className="font-semibold text-[16px]">
                           Title
                         </FieldLabel>
@@ -88,21 +239,23 @@ const VideoForm = ({ file }: { file: File }) => {
                         placeholder="Title (required)"
                         className="max-w-full mb-2"
                         autoComplete="off"
+                        onChange={(e) => {
+                          setTitle(e.target.value);
+                          field.onChange(e.target.value);
+                        }}
+                        value={title}
+                        disabled={isSubmitting}
                       />
-                      {fieldState.error && (
-                        <FieldError errors={[fieldState.error]} />
-                      )}
                     </Field>
                   )}
                 />
 
-                {/* --- Thumbnail --- */}
                 <Controller
                   name="thumbnail"
                   control={control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid} className="mt-4">
-                      <div className="flex flex-col ">
+                      <div className="flex flex-col">
                         <FieldLabel className="font-semibold">
                           Thumbnail
                         </FieldLabel>
@@ -110,7 +263,9 @@ const VideoForm = ({ file }: { file: File }) => {
                           Set a thumbnail that reflects your video content
                         </FieldDescription>
                       </div>
-                      <div className={`w-full h-24 ${!thumbnail && "border-dashed border-border border-2"}  mb-2 flex flex-col items-center justify-center gap-2 cursor-pointer`}>
+                      <div
+                        className={`w-full h-24 ${!thumbnail && "border-dashed border-border border-2"} mb-2 flex flex-col items-center justify-center gap-2 cursor-pointer`}
+                      >
                         <label className="flex flex-col items-center justify-center cursor-pointer w-full h-full">
                           {!thumbnail ? (
                             <>
@@ -129,31 +284,28 @@ const VideoForm = ({ file }: { file: File }) => {
                           <input
                             type="file"
                             accept="image/*"
-                            className={`hidden`}
+                            className="hidden"
+                            disabled={isSubmitting}
                             onChange={(e) => {
-                              field.onChange(e.target.files?.[0]);
-                              if (e.target.files?.[0]) {
-                                setThumbnail(e.target.files?.[0]);
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                field.onChange(file);
+                                setThumbnail(file);
                               }
                             }}
                           />
                         </label>
                       </div>
-
-                      {fieldState.error && (
-                        <FieldError errors={[fieldState.error]} />
-                      )}
                     </Field>
                   )}
                 />
 
-                {/* --- Workspace --- */}
                 <Controller
                   name="workspace"
                   control={control}
                   render={({ field, fieldState }) => (
                     <Field data-invalid={fieldState.invalid} className="mt-4">
-                      <div className="flex flex-col ">
+                      <div className="flex flex-col">
                         <FieldLabel className="font-semibold">
                           Workspace
                         </FieldLabel>
@@ -163,7 +315,11 @@ const VideoForm = ({ file }: { file: File }) => {
                       </div>
 
                       <Select
-                        onValueChange={field.onChange}
+                        disabled={isSubmitting}
+                        onValueChange={(value) => {
+                          field.onChange(value);
+                          setSelectedWorkspace(value as Id<"workspaces">);
+                        }}
                         value={field.value || undefined}
                       >
                         <SelectTrigger className="w-full flex border-input border gap-2 px-3 py-2 rounded-md bg-input/20">
@@ -172,27 +328,25 @@ const VideoForm = ({ file }: { file: File }) => {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectGroup>
-                            <SelectItem value="Workspace A">
-                              Workspace A
-                            </SelectItem>
-                            <SelectItem value="Workspace B">
-                              Workspace B
-                            </SelectItem>
-                            <SelectItem value="Workspace C">
-                              Workspace C
-                            </SelectItem>
+                            {workspaces.map((workspace) => (
+                              <>
+                                {workspace && (
+                                  <SelectItem
+                                    value={workspace?._id}
+                                    key={workspace?._id}
+                                  >
+                                    {workspace.name}
+                                  </SelectItem>
+                                )}
+                              </>
+                            ))}
                           </SelectGroup>
                         </SelectContent>
                       </Select>
-
-                      {fieldState.error && (
-                        <FieldError errors={[fieldState.error]} />
-                      )}
                     </Field>
                   )}
                 />
 
-                {/* --- Folders --- */}
                 <Controller
                   name="folders"
                   control={control}
@@ -209,40 +363,67 @@ const VideoForm = ({ file }: { file: File }) => {
 
                       <Select
                         onValueChange={field.onChange}
-                        value={field.value}
+                        value={field.value || undefined}
+                        disabled={isSubmitting}
                       >
                         <SelectTrigger className="w-full flex border-input border gap-2 px-3 py-2 rounded-md bg-input/20">
                           <Folder />
                           <SelectValue placeholder="Select a folder" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectGroup>
-                            <SelectItem value="Folder 1">Folder 1</SelectItem>
-                            <SelectItem value="Folder 2">Folder 2</SelectItem>
-                            <SelectItem value="Folder 3">Folder 3</SelectItem>
-                          </SelectGroup>
+                          {folders && folders.length > 0 ? (
+                            <SelectGroup>
+                              {folders.map((folder) => (
+                                <SelectItem value={folder._id} key={folder._id}>
+                                  {folder.name}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center text-center p-6">
+                              <div className="bg-muted/40 p-3 rounded-full mb-2">
+                                <Folder className="w-6 h-6 text-muted-foreground" />
+                              </div>
+                              <h2 className="text-sm font-semibold text-muted-foreground mb-1">
+                                Select a workspace first
+                              </h2>
+                              <p className="text-xs text-muted-foreground/70 max-w-[250px]">
+                                Choose a workspace to load its folders and
+                                organize your videos.
+                              </p>
+                            </div>
+                          )}
                         </SelectContent>
                       </Select>
-
-                      {fieldState.error && (
-                        <FieldError errors={[fieldState.error]} />
-                      )}
                     </Field>
                   )}
                 />
               </div>
 
-              {/* RIGHT COLUMN */}
               <div className="w-1/2">
-                <VideoInformations file={file} thumbnail={thumbnail}/>
+                <VideoInformations
+                  videoMetadata={videoMetaData}
+                  filename={file.name}
+                  thumbnail={thumbnail}
+                  errors={errors}
+                />
               </div>
             </div>
           </FieldGroup>
+          <div className="flex items-center justify-between border-t border-border mt-6 px-2 py-3">
+            <Progress value={uploadProgress} className="w-[400px]" />
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Spinner />
+                  Processing
+                </>
+              ) : (
+                "Upload"
+              )}
+            </Button>
+          </div>
         </form>
-      </div>
-      <div className="flex items-center justify-between border-t border-border mt-6 px-2 py-3">
-        <Progress value={50} className="w-[400px]" />
-        <Button type="submit">Upload</Button>
       </div>
     </div>
   );

@@ -9,7 +9,7 @@ type FileUploadProps = {
 
 const FileUpload = ({ setFile }: FileUploadProps) => {
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    if (e.target.files) {
+    if (e.target.files?.[0]) {
       setFile(e.target.files[0]);
     }
   }
@@ -40,7 +40,7 @@ const FileUpload = ({ setFile }: FileUploadProps) => {
               Select Files
             </label>
           </Button>
-          <input id="file-upload" type="file" hidden onChange={handleFileChange} />
+          <input id="file-upload" accept="video/*" type="file" hidden onChange={handleFileChange} />
         </div>
       </div>
     </>

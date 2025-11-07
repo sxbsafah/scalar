@@ -1,6 +1,5 @@
-import { Eye, MessageSquare } from "lucide-react";
-
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Eye, MessageSquare, Play } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 type VideoCardProps = {
   thumbnail: string;
@@ -22,32 +21,56 @@ const VideoCard = ({
   commentsCount,
 }: VideoCardProps) => {
   return (
-    <div className="bg-card text-card-foreground rounded-xl border border-border w-[300px] hover:cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all overflow-hidden relative z-10">
-      <img src={thumbnail} alt="Thumbnail" className="rounded-t-xl w-full h-[169px] object-cover " />
-      <div className="p-3 ">
-        <h1 className="text-[14px] font-medium mb-3 line-clamp-2 h-[40px]">{title}</h1>
-        <div className="flex items-center gap-1.5 mb-4">
-          <Avatar>
-            <AvatarImage src={avatar} alt={`@${user}`} />
-            <AvatarFallback>{user.charAt(0)}</AvatarFallback>
-          </Avatar>
-          <div>
-            <h4 className="text-[14px] font-medium">{user}</h4>
-            <h5 className="text-[12px] text-muted-foreground">{time}</h5>
+    <div className="group bg-linear-to-br from-card to-card/80 rounded-2xl border border-border/30 overflow-hidden shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 cursor-pointer backdrop-blur-sm">
+      <div className="relative overflow-hidden">
+        <img
+          src={thumbnail}
+          alt={title}
+          className="w-full h-[180px] object-cover transition-transform duration-700 group-hover:scale-110"
+        />
+
+          <div className="absolute inset-0 bg-gradien  from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 delay-75">
+          <div className="bg-white/95 rounded-full p-3.5 shadow-xl transform scale-90 group-hover:scale-100 transition-transform duration-300">
+            <Play className="w-6 h-6 text-black fill-black" />
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="gap-1 flex items-center text-muted-foreground">
-            <h5>{watchCount}</h5>
-            <Eye />
+
+        <div className="absolute bottom-2 right-2 bg-black/80 text-white text-[11px] font-semibold px-2 py-0.5 rounded-md backdrop-blur-sm border border-white/10">
+          {time}
+        </div>
+      </div>
+
+      <div className="p-4">
+        <h1 className="text-[15px] font-semibold mb-2 line-clamp-2 leading-snug group-hover:text-primary transition-colors duration-300">
+          {title}
+        </h1>
+
+        <div className="flex items-center gap-3 mb-3">
+          <Avatar className="h-8 w-8 ring-1 ring-border group-hover:ring-primary/40 transition-all duration-300">
+            <AvatarImage src={avatar} alt={user} />
+            <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold">
+              {user.charAt(0)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <h4 className="text-sm font-medium truncate">{user}</h4>
+            <p className="text-xs text-muted-foreground">{time}</p>
           </div>
-          <div className="gap-1 flex items-center text-muted-foreground">
-            <h5>{commentsCount}</h5>
-            <MessageSquare />
+        </div>
+
+        <div className="flex items-center gap-4 pt-2 border-t border-border/30 text-muted-foreground">
+          <div className="flex items-center gap-1.5 hover:text-foreground transition-colors">
+            <Eye className="w-4 h-4" />
+            <span className="text-sm font-medium">{watchCount.toLocaleString()}</span>
+          </div>
+          <div className="flex items-center gap-1.5 hover:text-foreground transition-colors">
+            <MessageSquare className="w-4 h-4" />
+            <span className="text-sm font-medium">{commentsCount.toLocaleString()}</span>
           </div>
         </div>
       </div>
-      <div className="absolute rounded-full w-[200px] h-[200px] bg-[#ddd] -top-[50px] -left-[50px] blur-3xl opacity-20 z-5"></div>
     </div>
   );
 };

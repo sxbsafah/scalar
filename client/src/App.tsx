@@ -7,12 +7,19 @@ import Library from "@/pages/Library";
 import PaymentSucess from "./pages/PaymentSuccess";
 import Billing from "./pages/Billing";
 import Notifications from "@/pages/Notifications";
+import { UserProvider } from "./providers/UserProvider";
 
 function App() {
   return (
     <Routes>
       <Route element={<ProtectedRoute />}>
-        <Route element={<Home />}>
+        <Route
+          element={
+            <UserProvider>
+              <Home />
+            </UserProvider>
+          }
+        >
           <Route index element={<Library />} />
           <Route path="/billing" element={<Billing />} />
           <Route path="/notifications" element={<Notifications />} />

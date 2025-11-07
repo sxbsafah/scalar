@@ -20,7 +20,7 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@radix-ui/react-collapsible";
+} from "@/components/ui/collapsible";
 import { Separator } from "./ui/separator";
 import { ScrollArea } from "./ui/scroll-area";
 import { Doc } from "../../convex/_generated/dataModel";
@@ -74,10 +74,8 @@ const AppSidebar = ({
           <Logo />
         ) : (
           <div className="flex items-center gap-3 mb-4">
-            {/* Logo image placeholder */}
             <Skeleton className="size-8 rounded-md" />
 
-            {/* Text placeholder */}
             <Skeleton className="h-8 w-[100px] rounded-sm" />
           </div>
         )}

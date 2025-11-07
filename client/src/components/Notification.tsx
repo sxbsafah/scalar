@@ -11,7 +11,9 @@ type NotificationProps = {
   username: string;
   workspaceName: string;
   timestamp: number;
-  onAccept: (e?: React.MouseEvent<HTMLButtonElement>) => Promise<Id<"memberships">>;
+  onAccept: (
+    e?: React.MouseEvent<HTMLButtonElement>
+  ) => Promise<Id<"memberships">>;
   onDecline: (e?: React.MouseEvent<HTMLButtonElement>) => Promise<null>;
 };
 
@@ -21,77 +23,91 @@ const Notification = ({
   workspaceName,
   timestamp,
   onAccept,
-  onDecline
+  onDecline,
 }: NotificationProps) => {
   const [isAcceptLoading, setIsAcceptLoading] = useState(false);
   const [isDeclineLoading, setIsDeclineLoading] = useState(false);
+
   return (
-    <div className="flex items-center justify-between bg-card border border-border rounded-xl p-3 shadow-2xs">
-      <div className="flex gap-1.5 items-center">
-        <Avatar>
-          <AvatarImage src={src} alt="Avatar" />
-          <AvatarFallback>User Avatar</AvatarFallback>
+    <div className="flex items-center justify-between bg-card border border-border rounded-2xl p-4 shadow-sm transition hover:shadow-md">
+      <div className="flex items-center gap-3">
+        <Avatar className="w-10 h-10 ring-1 ring-border">
+          <AvatarImage src={src} alt={`${username}'s avatar`} />
+          <AvatarFallback>{username[0]?.toUpperCase() || "U"}</AvatarFallback>
         </Avatar>
-        <div className="flex flex-col">
-          <p className="text-muted-foreground text-[14px] font-medium">
-            <span className="text-card-foreground">{username}</span> invited you
-            into {workspaceName}
+        <div className="flex flex-col leading-tight">
+          <p className="text-sm text-muted-foreground font-medium">
+            <span className="text-card-foreground font-semibold">
+              {username}
+            </span>{" "}
+            invited you to{" "}
+            <span className="text-primary font-semibold">{workspaceName}</span>
           </p>
-          <span className="text-muted-foreground text-[12px]">
+          <span className="text-[12px] text-muted-foreground/70">
             {timestamp} ago
           </span>
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <Button onClick={async () => {
-          setIsAcceptLoading(isAcceptLoading => !isAcceptLoading);
-          try {
-            const membereship = await onAccept()
-            if (!membereship) {
-              throw new Error("Failed to accept invitation");
+        <Button
+          onClick={async (e) => {
+            setIsAcceptLoading(true);
+            try {
+              const membership = await onAccept(e);
+              if (!membership) throw new Error("Failed to accept invitation");
+              toast.success(`Joined ${workspaceName}`, {
+                position: "bottom-right",
+              });
+            } catch (err) {
+              toast.error((err as Error).message, { position: "bottom-right" });
+            } finally {
+              setIsAcceptLoading(false);
             }
-          } catch (err) {
-            toast.error((err as Error).message, {
-              position: "bottom-right",
-            })
-          } finally {
-            setIsAcceptLoading(isAcceptLoading => !isAcceptLoading);
-          }
-        }} disabled={isAcceptLoading || isDeclineLoading}>{isAcceptLoading ? (
+          }}
+          disabled={isAcceptLoading || isDeclineLoading}
+          className="flex items-center gap-1 text-sm"
+        >
+          {isAcceptLoading ? (
             <>
-              <Spinner />
-              processing
+              <Spinner className="w-4 h-4" />
+              Processing...
             </>
           ) : (
-              <>
-                <Check />
-                Accept
-              </>
-
-        )}</Button>
-        <Button variant={"destructive"} disabled={isDeclineLoading || isAcceptLoading} onClick={async () => {
-          setIsDeclineLoading(isDeclineLoading => !isDeclineLoading);
-          try {
-            await onDecline();
-          } catch (err) {
-            toast.error((err as Error).message, {
-              position: "bottom-right"
-            })
-          } finally {
-            setIsDeclineLoading(isDeclineLoading => !isDeclineLoading);
-          }
-        }}>{isDeclineLoading ? (
             <>
-              <Spinner />
-              processing
+              <Check className="w-4 h-4" />
+              Accept
+            </>
+          )}
+        </Button>
+
+        <Button
+          variant="destructive"
+          disabled={isDeclineLoading || isAcceptLoading}
+          onClick={async (e) => {
+            setIsDeclineLoading(true);
+            try {
+              await onDecline(e);
+              toast.info("Invitation declined", { position: "bottom-right" });
+            } catch (err) {
+              toast.error((err as Error).message, { position: "bottom-right" });
+            } finally {
+              setIsDeclineLoading(false);
+            }
+          }}
+          className="flex items-center gap-1 text-sm"
+        >
+          {isDeclineLoading ? (
+            <>
+              <Spinner className="w-4 h-4" />
+              Processing...
             </>
           ) : (
-              <>
-                <X />
-                Decline
-              </>
-
-        )}</Button>
+            <>
+              <X className="w-4 h-4" />
+              Decline
+            </>
+          )}
+        </Button>
       </div>
     </div>
   );

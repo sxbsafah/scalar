@@ -1,5 +1,5 @@
 import { Outlet } from "react-router";
-import { ClerkLoaded, ClerkLoading, useAuth } from "@clerk/clerk-react";
+import { ClerkLoaded, ClerkLoading } from "@clerk/clerk-react";
 import Loader from "@/components/Loader";
 import AppSidebar from "@/components/AppSidebar";
 import { useState } from "react";
@@ -11,15 +11,13 @@ import { api } from "../../convex/_generated/api";
 import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Toaster } from "@/components/ui/sonner";
+import useConvexUser from "@/hooks/useConvexUser";
+
 
 const Home = () => {
-  const userIdentity = useAuth();
   const workspaces = useQuery(api.workspaces.getUserWorkspaces);
-  const user = useQuery(api.users.getUserByClerkId, {
-    clerkId: userIdentity.userId as string,
-  });
   const [workspace, setWorkspace] = useState<Doc<"workspaces"> | null>(null);
-
+  const user = useConvexUser();
   useEffect(() => {
     if (workspaces && user && !workspace) {
       setWorkspace(
@@ -28,7 +26,7 @@ const Home = () => {
         ) as Doc<"workspaces">
       );
     }
-  }, [workspaces]);
+  }, [user, workspace, workspaces]);
 
   return (
     <>
@@ -46,8 +44,8 @@ const Home = () => {
               workspaces={workspaces}
             />
             <main className="px-5 grow h-screen overflow-y-auto flex flex-col">
-              {workspace ? (
-                <Header />
+              {workspace && workspaces ? (
+                <Header workspaces={workspaces} />
               ) : (
                 <div className="flex items-center justify-between py-4 w-full mb-12">
                   <div>

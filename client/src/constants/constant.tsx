@@ -39,3 +39,14 @@ export const VIDEO_LIMITS = {
     MAX_PIXELS: 1920 * 1080,
   },
 } as const;
+
+
+
+export const ALLOWED_VIDEO_EXTENSIONS = [
+  "mp4", "mov", "avi", "mkv", "webm", "flv", "wmv", "mpeg", "mpg", "3gp", "m4v",
+];
+
+
+export const ALLOWED_IMAGE_EXTENSIONS = [
+  "jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "svg", "heic",
+];

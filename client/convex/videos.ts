@@ -1,17 +1,21 @@
-import { query } from "./_generated/server";
+import {  mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
 
+
+
 export const getVideosByFolderId = query({
-  args: { folderId: v.id("folders") },
-  handler: async (ctx, { folderId }) => {
-    const identity = await ctx.auth.getUserIdentity();
+  args: { folderId: v.id("folders"), clerkId: v.optional(v.string()) },
+  handler: async (ctx, { folderId, clerkId }) => {
+    const identity =
+      (await ctx.auth.getUserIdentity()) ||
+      (clerkId ? { subject: clerkId } : null);
     if (!identity) {
       throw new ConvexError("Unauthorized");
     }
     const videos = await ctx.db
       .query("videos")
-      .filter(q => q.eq(q.field("folderId"), folderId))
+      .filter((q) => q.eq(q.field("folderId"), folderId))
       .collect();
 
     // Step 2: Populate user data manually
@@ -29,4 +33,39 @@ export const getVideosByFolderId = query({
   },
 });
 
-
+export const createVideo = mutation({
+  args: {
+    clerkId: v.string(),
+    title: v.string(),
+    folderId: v.id("folders"),
+    workspaceId: v.id("workspaces"),
+    videoUrl: v.string(),
+    videoPublicId: v.string(),
+    thumbnailUrl: v.string(),
+    thumbnailPublicId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    if (!args.clerkId) {
+      throw new ConvexError("User Identity is unknown");
+    }
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("clerkId"), args.clerkId))
+      .first();
+    if (!user) {
+      throw new ConvexError("User not found");
+    }
+    return await ctx.db.insert("videos", {
+      title: args.title,
+      thumbnailPublicId: args.thumbnailPublicId,
+      videoPublicId: args.videoPublicId,
+      videoUrl: args.videoUrl,
+      thumbnailUrl: args.thumbnailUrl,
+      folderId: args.folderId,
+      workspaceId: args.workspaceId,
+      userId: user._id,
+      commentsCount: 0,
+      watchCount: 0,
+    });
+  },
+});

@@ -11,6 +11,7 @@
 import type * as folders from "../folders.js";
 import type * as http from "../http.js";
 import type * as membereships from "../membereships.js";
+import type * as node from "../node.js";
 import type * as notifications from "../notifications.js";
 import type * as stripe from "../stripe.js";
 import type * as subscriptions from "../subscriptions.js";
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   folders: typeof folders;
   http: typeof http;
   membereships: typeof membereships;
+  node: typeof node;
   notifications: typeof notifications;
   stripe: typeof stripe;
   subscriptions: typeof subscriptions;

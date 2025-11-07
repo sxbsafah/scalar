@@ -29,6 +29,9 @@ import { useState, useEffect } from "react";
 import FoldersSkeletonLoading from "@/components/FoldersSkeletonLoading";
 import { Id } from "../../convex/_generated/dataModel";
 import VideoCardSkeleton from "@/components/VideCardSkeleton";
+import { timeAgo } from "@/lib/timeAgo";
+
+
 
 export const folderSchema = z.object({
   name: z.string().min(2, "Folder name must be at least 2 characters long"),
@@ -254,7 +257,7 @@ const Library = () => {
                     watchCount={video.watchCount}
                     commentsCount={video.commentsCount}
                     user={video.user?.username as string}
-                    time={"4d ago"}
+                    time={timeAgo(video._creationTime)}
                     avatar={video.user?.profileImageUrl as string}
                     thumbnail={video.thumbnailUrl}
                   />

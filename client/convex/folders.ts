@@ -78,9 +78,10 @@ export const getFolderByIdandWorkspaceId = query({
   args: {
     folderId: v.id("folders"),
     workspaceId: v.id("workspaces"),
+    clerkId: v.optional(v.string()),
   },
-  handler: async (ctx,{ folderId, workspaceId }) => {
-    const identity = await ctx.auth.getUserIdentity();
+  handler: async (ctx,{ folderId, workspaceId, clerkId }) => {
+    const identity = await ctx.auth.getUserIdentity() || (clerkId ? { subject: clerkId } : null);
     if (!identity) {
       throw new ConvexError("User Identity Is Uknown");
     }
