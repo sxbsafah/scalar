@@ -60,18 +60,15 @@ const Library = () => {
         }
       : "skip"
   );
-  useEffect(() => {
-    if (workspace) {
-      setFolder(workspace.defaultFolder);
-    }
-  }, [workspace]);
 
   useEffect(() => {
+    if (workspace) setFolder(workspace.defaultFolder); 
     if (!folder) return;
     setInitialFoldersAnimation(true);
     const id = setTimeout(() => setInitialFoldersAnimation(false), 0);
     return () => clearTimeout(id);
   }, [workspace]);
+  
   useEffect(() => {
     if (!folder) return;
     setInitialVideosAnimation(true);

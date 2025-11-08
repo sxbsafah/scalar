@@ -26,6 +26,8 @@ import axios from "axios";
 import { UseFormHandleSubmit, Control, UseFormSetError } from "react-hook-form";
 import { VideoSchemaType } from "@/components/Header";
 import { FieldErrors } from "react-hook-form";
+import Loader from "./Loader";
+import { toast } from "sonner";
 
 const VideoForm = ({
   file,
@@ -74,7 +76,7 @@ const VideoForm = ({
           workspaceId: selectedWorkspace,
         }
       : "skip"
-  );
+  ) || null;
 
   const requestSignedUrl = useAction(api.node.getSignedUploadUrl);
   const createVideo = useAction(api.node.createVideo);
@@ -189,6 +191,7 @@ const VideoForm = ({
           folder: data.folders as Id<"folders">,
         });
         // Success! Reset and close
+        toast.success("Video uploaded successfully");
         onReset();
         onClose();
       } catch (error) {
@@ -379,7 +382,7 @@ const VideoForm = ({
                                 </SelectItem>
                               ))}
                             </SelectGroup>
-                          ) : (
+                          ) : folders === undefined ? (
                             <div className="flex flex-col items-center justify-center text-center p-6">
                               <div className="bg-muted/40 p-3 rounded-full mb-2">
                                 <Folder className="w-6 h-6 text-muted-foreground" />
@@ -391,6 +394,10 @@ const VideoForm = ({
                                 Choose a workspace to load its folders and
                                 organize your videos.
                               </p>
+                            </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center text-center p-6">
+                                  <Loader />
                             </div>
                           )}
                         </SelectContent>
