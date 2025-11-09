@@ -185,7 +185,10 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground overflow-x-hidden ;
+    @apply bg-background text-foreground overflow-x-hidden rounded-4xl;
+  }
+  main {
+    -webkit-app-region: drag;
   }
   a.active {
     @apply bg-accent text-accent-foreground;

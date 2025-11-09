@@ -1,4 +1,7 @@
-import { BookOpen, CreditCard, Bell, Settings } from "lucide-react"
+import Settings  from "@/components/Settings";
+import  Home  from "@/components/Home";
+import Billing  from "@/components/Billing";
+import Bell  from "@/components/Bell";
 
 
 
@@ -6,12 +9,14 @@ export const navigationItems = [
   {
     title: "Library",
     to: "/",
-    icon: <BookOpen />,
+    icon: (
+      <Home />
+    ),
   },
   {
     title: "Billing",
     to: "/billing",
-    icon: <CreditCard />,
+    icon: <Billing />,
   },
   {
     title: "Notifications",
@@ -22,8 +27,8 @@ export const navigationItems = [
     title: "Settings",
     to: "/settings",
     icon: <Settings />,
-  }
-]
+  },
+];
 
 export const VIDEO_LIMITS = {
   FREE: {
@@ -40,13 +45,28 @@ export const VIDEO_LIMITS = {
   },
 } as const;
 
-
-
 export const ALLOWED_VIDEO_EXTENSIONS = [
-  "mp4", "mov", "avi", "mkv", "webm", "flv", "wmv", "mpeg", "mpg", "3gp", "m4v",
+  "mp4",
+  "mov",
+  "avi",
+  "mkv",
+  "webm",
+  "flv",
+  "wmv",
+  "mpeg",
+  "mpg",
+  "3gp",
+  "m4v",
 ];
 
-
 export const ALLOWED_IMAGE_EXTENSIONS = [
-  "jpg", "jpeg", "png", "gif", "bmp", "webp", "tiff", "svg", "heic",
+  "jpg",
+  "jpeg",
+  "png",
+  "gif",
+  "bmp",
+  "webp",
+  "tiff",
+  "svg",
+  "heic",
 ];

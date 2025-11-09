@@ -6,6 +6,17 @@ import tailwindcss from "@tailwindcss/vite";
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  build: {
+    emptyOutDir: false,
+    manifest: true,
+    outDir: "dist",
+    rollupOptions: {
+      input: {
+        main: path.join(__dirname, "index.html"),
+        recordStudio: path.join(__dirname, "electron/record_studio.html"),
+      }
+    }
+  },
   plugins: [
     react(),
     tailwindcss(),

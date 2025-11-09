@@ -124,7 +124,7 @@ const Invite = ({ children, users, workspaceId }: InviteProps) => {
                           size="sm"
                           className="h-auto px-2 py-1 font-semibold gap-1.5 text-[12px]"
                         >
-                          {isLoading ? (
+                          {!isLoading ? (
                             <>
                               <Plus className="w-4 h-4" />
                               Invite
