@@ -1,7 +1,4 @@
-import Settings  from "@/components/Settings";
-import  Home  from "@/components/Home";
-import Billing  from "@/components/Billing";
-import Bell  from "@/components/Bell";
+import { Home, CreditCard, Bell, Settings } from "lucide-react";
 
 
 
@@ -16,7 +13,7 @@ export const navigationItems = [
   {
     title: "Billing",
     to: "/billing",
-    icon: <Billing />,
+    icon: <CreditCard />,
   },
   {
     title: "Notifications",

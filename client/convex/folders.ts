@@ -100,3 +100,36 @@ export const getFolderByIdandWorkspaceId = query({
   }
 })
 
+export const deleteFolderById = mutation({
+  args: {
+    id: v.id("folders"),
+  },
+  handler: async (ctx, { id }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("User Identity is Unknown")
+    }
+    const user = await ctx.db.query("users").filter(q => q.eq(q.field("clerkId"), identity.subject)).first();
+    if (!user) {
+      throw new ConvexError("User Not Found");
+    }
+    const folder = await ctx.db.get(id);
+    if (!folder) {
+      throw new ConvexError("Folder Not Found");
+    }
+    const isDefault = !!(await ctx.db.query("workspaces").filter(q => q.eq(q.field("defaultFolder"), folder._id)).first());
+    if (isDefault) {
+      throw new ConvexError("Cannot Delete Default Folder");
+    }
+    const memberships = await ctx.db.query("memberships").filter(q => q.eq(q.field("workspaceId"), folder.workspaceId)).collect();
+    if (memberships.some(membership => membership.userId.toString() === user._id.toString()) === false) {
+      throw new ConvexError("User Does Not Have Permission To Delete This Folder");
+    }
+    const videos = await ctx.db.query("videos").filter(q => q.eq(q.field("folderId"), folder._id)).collect();
+    videos.forEach(async (video) => {
+      await ctx.db.delete(video._id);
+    })
+    await ctx.db.delete(id);
+  }
+})
+

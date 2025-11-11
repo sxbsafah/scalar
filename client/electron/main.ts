@@ -26,7 +26,7 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
 
 let win: BrowserWindow | null;
 // let studioTray: BrowserWindow | null;
-let recordTray: BrowserWindow | null;
+// let recordTray: BrowserWindow | null;
 
 function createWindow() {
   win = new BrowserWindow({
@@ -67,24 +67,24 @@ function createWindow() {
   //   },
   // });
 
-  recordTray = new BrowserWindow({
-    width: 250,
-    height: 340,
-    resizable: false,
-    frame: false,
-    hasShadow: true,
-    alwaysOnTop: true,
-    transparent: true,
-    webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-      devTools: true,
-      preload: path.join(__dirname, "preload.mjs"),
-    },
-  });
+  // recordTray = new BrowserWindow({
+  //   width: 250,
+  //   height: 340,
+  //   resizable: false,
+  //   frame: false,
+  //   hasShadow: true,
+  //   alwaysOnTop: true,
+  //   transparent: true,
+  //   webPreferences: {
+  //     nodeIntegration: false,
+  //     contextIsolation: true,
+  //     devTools: true,
+  //     preload: path.join(__dirname, "preload.mjs"),
+  //   },
+  // });
 
 
-  recordTray.setAlwaysOnTop(true, "screen-saver");
+  // recordTray.setAlwaysOnTop(true, "screen-saver");
   // studioTray.setAlwaysOnTop(true, "screen-saver");
   // Menu.setApplicationMenu(null);
 
@@ -95,7 +95,7 @@ function createWindow() {
   console.log(import.meta.env.VITE_APP_URL);
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL);
-    recordTray.loadURL(`${import.meta.env.VITE_APP_URL}/record_studio.html`);
+    // recordTray.loadURL(`${import.meta.env.VITE_APP_URL}/record_studio.html`);
   } else {
     // win.loadFile('dist/index.html')
     win.loadFile(path.join(RENDERER_DIST, "index.html"));

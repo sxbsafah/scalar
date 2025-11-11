@@ -67,7 +67,7 @@ const Library = () => {
     setInitialFoldersAnimation(true);
     const id = setTimeout(() => setInitialFoldersAnimation(false), 0);
     return () => clearTimeout(id);
-  }, [workspace]);
+  }, [folder, workspace]);
   
   useEffect(() => {
     if (!folder) return;
@@ -199,9 +199,11 @@ const Library = () => {
                   <Folder
                     folderName={folder.name}
                     videosCount={folder.videosCount}
+                    folderId={folder._id}
                     onClick={() => {
                       setFolder(folder._id);
                     }}
+                    isDefault={workspace?.defaultFolder === folder._id}
                   />
                 </motion.div>
               ))

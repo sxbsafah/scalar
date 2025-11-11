@@ -207,7 +207,7 @@ const VideoForm = ({
   return (
     <div className="flex flex-col justify-between">
       <div className="flex items-center justify-between border-b-border border-b px-2 py-1">
-        <h1 className="font-bold text-card-foreground">Upload Video</h1>
+        <h1 className="font-bold text-card-foreground">Details</h1>
         <button
           onClick={onClose}
           className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none"
@@ -218,7 +218,6 @@ const VideoForm = ({
       </div>
 
       <div className="w-[900px] px-8 py-3">
-        <h1 className="text-[24px] font-bold mb-2">Details</h1>
         <form onSubmit={handleSubmit(onSubmit)}>
           <FieldGroup>
             <div className="flex gap-6">
