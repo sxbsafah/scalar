@@ -133,3 +133,51 @@ export const deleteFolderById = mutation({
   }
 })
 
+export const duplicateFolder = mutation({
+  args: {
+    id: v.id("folders"),
+    workspaceId: v.id("workspaces"),
+  },
+  handler: async (ctx, { id, workspaceId }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("User Identity Is Uknown");
+    }
+    const workspace = await ctx.db.get(workspaceId) as Doc<"workspaces">;
+    if (!workspace) {
+      throw new ConvexError("Workspace Not Found");
+    }
+    const user = await ctx.db.query("users").filter(q => q.eq(q.field("clerkId"), identity.subject)).first();
+    if (!user) {
+      throw new ConvexError("User Not Found");
+    }
+    if (!user.workspaces.includes(workspace._id)) {
+      throw new ConvexError("User Does Not Have Access To This Workspace");
+    }
+    const folderToDuplicate = await ctx.db.get(id);
+    if (!folderToDuplicate) {
+      throw new ConvexError("Folder Not Found");
+    }
+    const newFolder = await ctx.db.insert("folders", {
+      workspaceId: folderToDuplicate.workspaceId,
+      name: `${folderToDuplicate.name} Copy`,
+      videosCount: 0,
+    });
+    const videosToDuplicate = await ctx.db.query("videos").filter(q => q.eq(q.field("folderId"), id)).collect();
+    videosToDuplicate.forEach(async video => {
+      await ctx.db.insert("videos", {
+        title: video.title,
+        folderId: newFolder,
+        thumbnailPublicId: video.thumbnailPublicId,
+        thumbnailUrl: video.thumbnailUrl,
+        videoPublicId: video.videoPublicId,
+        videoUrl: video.videoUrl,
+        workspaceId,
+        userId: video.userId,
+        commentsCount: video.commentsCount,
+        watchCount: video.watchCount,
+      });
+    })
+  }
+})
+

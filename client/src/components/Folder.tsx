@@ -11,6 +11,7 @@ import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "convex/_generated/dataModel";
 import { toast } from "sonner";
+import { useWorkspace } from "@/hooks/useWorkspace";
 
 
 
@@ -25,6 +26,8 @@ type FolderProps = {
 
 const Folder = ({ folderName, videosCount, onClick, folderId, isDefault }: FolderProps) => {
   const deleteFolder = useMutation(api.folders.deleteFolderById);
+  const duplicateFolder = useMutation(api.folders.duplicateFolder);
+  const workspace = useWorkspace();
 
   const handleDeleteFolder = async () => {
     try {
@@ -35,6 +38,22 @@ const Folder = ({ folderName, videosCount, onClick, folderId, isDefault }: Folde
       });
     } catch {
       toast.error("Failed to delete folder", {
+        position: "bottom-right",
+        className: "text-destructive",
+      })
+    }
+  }
+
+  const handleFolderDuplication = async () => {
+    try {
+      if (workspace) {
+        await duplicateFolder({ id: folderId, workspaceId: workspace?._id })
+        toast.success("Folder Duplicated successfully", {
+          position: "bottom-right",
+        })
+      }
+    } catch {
+      toast.error("Failed to duplicate folder", {
         position: "bottom-right",
         className: "text-destructive",
       })
@@ -69,7 +88,7 @@ const Folder = ({ folderName, videosCount, onClick, folderId, isDefault }: Folde
           Move Folder
           <ContextMenuShortcut>⌘M</ContextMenuShortcut>
         </ContextMenuItem>
-        <ContextMenuItem >
+        <ContextMenuItem onClick={handleFolderDuplication}>
           Duplicate
           <ContextMenuShortcut>⌘D</ContextMenuShortcut>
         </ContextMenuItem>
