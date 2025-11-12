@@ -22,13 +22,14 @@ function createWindow() {
     // titleBarStyle: 'hidden',
     // titleBarOverlay: {
     //   color: "#0a0a0a",
-    //   symbolColor: "#fff"
-    // hasShadow: true,
+    //   symbolColor: "#fff",
+    //   height: 30,
     // },
     webPreferences: {
       preload: path.join(__dirname, "preload.mjs"),
       nodeIntegration: false,
       contextIsolation: true
+      // devTools: false,
     }
   });
   win.webContents.on("did-finish-load", () => {

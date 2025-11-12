@@ -18,13 +18,12 @@ export const getVideosByFolderId = query({
       .filter((q) => q.eq(q.field("folderId"), folderId))
       .collect();
 
-    // Step 2: Populate user data manually
     const populatedVideos = await Promise.all(
       videos.map(async (video) => {
         const user = await ctx.db.get(video.userId);
         return {
           ...video,
-          user, // Add full user document here
+          user,
         };
       })
     );
@@ -55,6 +54,17 @@ export const createVideo = mutation({
     if (!user) {
       throw new ConvexError("User not found");
     }
+    const workspace = await ctx.db.get(args.workspaceId);
+    if (!workspace) {
+      throw new ConvexError("Workspace Not Found");
+    }
+    const folder = await ctx.db.get(args.folderId);
+    if (!folder) {
+      throw new ConvexError("Folder not found");
+    }
+    await ctx.db.patch(folder._id, {
+      videosCount: folder.videosCount + 1,
+    })
     return await ctx.db.insert("videos", {
       title: args.title,
       thumbnailPublicId: args.thumbnailPublicId,

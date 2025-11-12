@@ -13,59 +13,64 @@ import { Id } from "convex/_generated/dataModel";
 import { toast } from "sonner";
 import { useWorkspace } from "@/hooks/useWorkspace";
 
-
-
-
 type FolderProps = {
   folderName: string;
   videosCount: number;
   folderId: Id<"folders">;
-  onClick: (e?: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
+  handleFolderChange: (
+    e?: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ) => void;
   isDefault: boolean;
 };
 
-const Folder = ({ folderName, videosCount, onClick, folderId, isDefault }: FolderProps) => {
+const Folder = ({
+  folderName,
+  videosCount,
+  handleFolderChange,
+  folderId,
+  isDefault,
+}: FolderProps) => {
   const deleteFolder = useMutation(api.folders.deleteFolderById);
   const duplicateFolder = useMutation(api.folders.duplicateFolder);
   const workspace = useWorkspace();
 
   const handleDeleteFolder = async () => {
     try {
-      console.log(folderId)
+      console.log(folderId);
       await deleteFolder({ id: folderId });
       toast.success("Folder deleted successfully", {
-        position: "bottom-right"
+        position: "bottom-right",
       });
     } catch {
       toast.error("Failed to delete folder", {
         position: "bottom-right",
         className: "text-destructive",
-      })
+      });
     }
-  }
+  };
 
   const handleFolderDuplication = async () => {
     try {
       if (workspace) {
-        await duplicateFolder({ id: folderId, workspaceId: workspace?._id })
+        await duplicateFolder({ id: folderId, workspaceId: workspace?._id });
         toast.success("Folder Duplicated successfully", {
           position: "bottom-right",
-        })
+        });
       }
     } catch {
       toast.error("Failed to duplicate folder", {
         position: "bottom-right",
         className: "text-destructive",
-      })
+      });
     }
-  }
+  };
 
   return (
     <ContextMenu>
-      <ContextMenuTrigger asChild>
+      <ContextMenuTrigger>
         <button
           className="px-4 py-2 w-full border border-border bg-card flex rounded-sm justify-between items-center  relative overflow-hidden hover:cursor-pointer hover:shadow-2xl hover:scale-[1.02] transition-all text-start"
-          onClick={onClick}
+          onClick={handleFolderChange}
         >
           <div>
             <h4 className="font-semibold text-[14px]  text-card-foreground truncate max-w-[16ch]">
@@ -80,11 +85,11 @@ const Folder = ({ folderName, videosCount, onClick, folderId, isDefault }: Folde
         </button>
       </ContextMenuTrigger>
       <ContextMenuContent className="w-52">
-        <ContextMenuItem >
+        <ContextMenuItem>
           Rename Folder
           <ContextMenuShortcut>⌘R</ContextMenuShortcut>
         </ContextMenuItem>
-        <ContextMenuItem >
+        <ContextMenuItem>
           Move Folder
           <ContextMenuShortcut>⌘M</ContextMenuShortcut>
         </ContextMenuItem>
@@ -92,9 +97,15 @@ const Folder = ({ folderName, videosCount, onClick, folderId, isDefault }: Folde
           Duplicate
           <ContextMenuShortcut>⌘D</ContextMenuShortcut>
         </ContextMenuItem>
-        <ContextMenuItem className="text-destructive" onClick={handleDeleteFolder} disabled={isDefault}>
+        <ContextMenuItem
+          className="text-destructive"
+          onClick={handleDeleteFolder}
+          disabled={isDefault}
+        >
           Delete
-          <ContextMenuShortcut className="text-destructive">⌘⌫</ContextMenuShortcut>
+          <ContextMenuShortcut className="text-destructive">
+            ⌘⌫
+          </ContextMenuShortcut>
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>

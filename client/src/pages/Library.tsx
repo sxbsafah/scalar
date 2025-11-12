@@ -67,7 +67,7 @@ const Library = () => {
     setInitialFoldersAnimation(true);
     const id = setTimeout(() => setInitialFoldersAnimation(false), 0);
     return () => clearTimeout(id);
-  }, [folder, workspace]);
+  }, [workspace]);
   
   useEffect(() => {
     if (!folder) return;
@@ -200,7 +200,7 @@ const Library = () => {
                     folderName={folder.name}
                     videosCount={folder.videosCount}
                     folderId={folder._id}
-                    onClick={() => {
+                    handleFolderChange={() => {
                       setFolder(folder._id);
                     }}
                     isDefault={workspace?.defaultFolder === folder._id}

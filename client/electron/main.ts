@@ -42,16 +42,17 @@ function createWindow() {
     // titleBarStyle: 'hidden',
     // titleBarOverlay: {
     //   color: "#0a0a0a",
-    //   symbolColor: "#fff"
-    // hasShadow: true,
+    //   symbolColor: "#fff",
+    //   height: 30,
     // },
     webPreferences: {
       preload: path.join(__dirname, "preload.mjs"),
       nodeIntegration: false,
       contextIsolation: true,
+      // devTools: false,
     },
   });
-
+  // Menu.setApplicationMenu(null);
   // studioTray = new BrowserWindow({
   //   width: 70,
   //   height: 300,
