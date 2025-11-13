@@ -10,8 +10,10 @@ const PaymentSuccess = () => {
   return (
     <main className="h-screen flex items-center justify-center">
       <div className='px-8 py-6 border border-border bg-card rounded-sm shadow-lg text-center'>
-        <div className="flex flex-col items-center gap-2 mb-4">
-          <Check className="size-24" color={"#00c951"} />
+        <div className="flex flex-col items-center gap-2 mb-4 ">
+          <div className="bg-[#00c951]/20 p-4 rounded-full">
+            <Check className="size-24" color={"#00c951"} />
+          </div>
           <h1 className="text-3xl font-semibold text-[#00c951]">Purchase Successfuly</h1>
         </div>
         <h2 className="text-2xl font-semibold leading-10 text-card-foreground mb-6">Thank you for Buying Our Premium Product. Your Journey To new Skills and Knowledge begins now </h2>

@@ -127,7 +127,7 @@ const VideoForm = ({
           });
           return;
         }
-        if (videoMetaData.height > 720 && videoMetaData.width > 1280) {
+        if (videoMetaData.height > 720 || videoMetaData.width > 1280) {
           setError("file", {
             message: "Video Resolution must be at most 1280x720",
           });

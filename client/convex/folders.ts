@@ -161,8 +161,8 @@ export const duplicateFolder = mutation({
     const newFolder = await ctx.db.insert("folders", {
       workspaceId: folderToDuplicate.workspaceId,
       name: `${folderToDuplicate.name} Copy`,
-      videosCount: 0,
-    });
+      videosCount: folderToDuplicate.videosCount,
+    }); 
     const videosToDuplicate = await ctx.db.query("videos").filter(q => q.eq(q.field("folderId"), id)).collect();
     videosToDuplicate.forEach(async video => {
       await ctx.db.insert("videos", {

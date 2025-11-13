@@ -46,7 +46,7 @@ const Billing = () => {
       const session = await createPremiumCheckoutSession({
         plan: "month",
       });
-      if (session) {
+      if (session.checkout_url) {
         window.location.href = session.checkout_url;
       }
     } catch (error) {
@@ -62,7 +62,7 @@ const Billing = () => {
     <>
       <Title Title="Billing" subTitle="Manage your Billing" />
       {subscription ? (
-        <div className="bg-card p-6 rounded-lg relative overflow-hidden z-10">
+        <div className="dark:bg-card bg-secondary p-6 rounded-lg relative overflow-hidden z-10">
           <div className="flex items-center gap-3 mb-2">
             <BadgeCheck size={30} />
             <h1 className="text-3xl font-bold">

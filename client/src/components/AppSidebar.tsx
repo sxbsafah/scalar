@@ -32,8 +32,6 @@ import React from "react";
 import { Spinner } from "./ui/spinner";
 import Invite from "./Invite";
 
-
-
 const AppSidebar = ({
   workspace,
   setWorkspace,
@@ -48,9 +46,14 @@ const AppSidebar = ({
   const user = useQuery(api.users.getUserByClerkId, {
     clerkId: userIdentity.userId as string,
   });
-  const users = useQuery(api.users.getAllUsers, workspace ? {
-    workspace: workspace?._id,
-  }: "skip");
+  const users = useQuery(
+    api.users.getAllUsers,
+    workspace
+      ? {
+          workspace: workspace?._id,
+        }
+      : "skip"
+  );
   const [open, setOpen] = React.useState(false);
   const [isProcessing, setIsProcessing] = React.useState(false);
   const handleUpgrade = async (plan: "month" | "year") => {
@@ -88,18 +91,18 @@ const AppSidebar = ({
         >
           <CollapsibleTrigger asChild>
             {workspaces ? (
-              <div
-                className={
-                  "flex items-center justify-between py-0.5 rounded-xl"
-                }
-              >
-                <p
-                  className={
-                    "text-[14px] font-bold text-card-foreground line-clamp-1"
-                  }
-                >
-                  {`${workspace?.name}'s Workspace`}
-                </p>
+              <div className="flex items-center justify-between py-0.5 rounded-xl">
+                <div className="flex items-center min-w-0">
+                  {" "}
+                  {/* min-w-0 is key for truncation */}
+                  <p className="text-[14px] font-bold text-card-foreground truncate">
+                    {workspace?.name}
+                  </p>
+                  <span className="ml-1 text-[14px] font-bold text-card-foreground whitespace-nowrap">
+                    's Workspace
+                  </span>
+                </div>  
+
                 {open ? (
                   <ChevronUp
                     width={24}
@@ -147,10 +150,16 @@ const AppSidebar = ({
           <Invite users={users} workspaceId={workspace?._id}>
             <Button
               size={"sm"}
-              className={"h-auto px-2 py-1 font-semibold gap-1.5 text-[12px] w-full"}
+              className={
+                "h-auto px-2 py-1 font-semibold gap-1.5 text-[12px] w-full"
+              }
             >
               Invite To Workspace
-              <Plus width={12} height={12} className="text-primary-foreground" />
+              <Plus
+                width={12}
+                height={12}
+                className="text-primary-foreground"
+              />
             </Button>
           </Invite>
         ) : (
@@ -168,16 +177,16 @@ const AppSidebar = ({
             <SidebarMenu className={""}>
               {workspaces
                 ? navigationItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <Link to={item.to}>
-                      <SidebarMenuButton
-                        isActive={location.pathname === item.to}
-                        className="text-muted-foreground font-semibold"
-                      >
-                        {item.icon}
-                        {item.title}
-                      </SidebarMenuButton>
-                    </Link>
+                    <SidebarMenuItem key={item.title}>
+                      <Link to={item.to}>
+                        <SidebarMenuButton
+                          isActive={location.pathname === item.to}
+                          className="text-muted-foreground font-semibold"
+                        >
+                          {item.icon}
+                          {item.title}
+                        </SidebarMenuButton>
+                      </Link>
                     </SidebarMenuItem>
                   ))
                 : navigationItems.map((item) => (

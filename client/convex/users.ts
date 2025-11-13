@@ -31,7 +31,7 @@ export const createUser = mutation({
       videosCount: 0,
     });
     const workspaceId = await ctx.db.insert("workspaces", {
-      name: `${args.name}`,
+      name: `${args.username}`,
       defaultFolder: folderId,
       foldersCount: 1,
       membersCount: 1,
