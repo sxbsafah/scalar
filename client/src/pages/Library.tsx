@@ -4,25 +4,14 @@ import Title from "@/components/Title";
 import { Button } from "@/components/ui/button";
 import { FolderPlus } from "lucide-react";
 import Folder from "@/components/Folder";
-import { useMutation, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTrigger,
-  DialogDescription,
-  DialogClose,
-  DialogFooter,
-  DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { useForm, Controller } from "react-hook-form";
-import { Spinner } from "@/components/ui/spinner";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Field, FieldLabel, FieldError } from "@/components/ui/field";
 import VideoCard from "@/components/VideoCard";
 import { motion } from "motion/react";
 import { useState, useEffect } from "react";
@@ -30,14 +19,11 @@ import FoldersSkeletonLoading from "@/components/FoldersSkeletonLoading";
 import { Id } from "../../convex/_generated/dataModel";
 import VideoCardSkeleton from "@/components/VideCardSkeleton";
 import { timeAgo } from "@/lib/timeAgo";
+import FolderForm from "@/components/FolderForm";
 
 
 
-export const folderSchema = z.object({
-  name: z.string().min(2, "Folder name must be at least 2 characters long"),
-});
 
-type FolderType = z.infer<typeof folderSchema>;
 
 const Library = () => {
   const [folder, setFolder] = useState<Id<"folders"> | undefined>(undefined);
@@ -60,6 +46,7 @@ const Library = () => {
         }
       : "skip"
   );
+  
 
   useEffect(() => {
     if (workspace) setFolder(workspace.defaultFolder); 
@@ -77,44 +64,7 @@ const Library = () => {
   }, [folder]);
 
 
-  const {
-    handleSubmit,
-    setError,
-    control,
-    reset,
-    formState: { isSubmitting },
-  } = useForm<FolderType>({
-    resolver: zodResolver(folderSchema),
-    defaultValues: {
-      name: "",
-    },
-  });
-  const createFolder = useMutation(api.folders.createFolder);
-
-  const onFolderCreation = async ({ name }: FolderType) => {
-    try {
-      if (workspace) {
-        const folder = await createFolder({
-          workspaceId: workspace._id,
-          folderName: name,
-        });
-
-        if ((folder as { errors: string[] }).errors) {
-          setError("name", {
-            message: "Folder with This Name Already Exist",
-          });
-          return;
-        }
-      }
-      reset({
-        name: "",
-      }); // reset other form state but keep defaultValues and form values
-    } catch (err) {
-      setError("name", {
-        message: (err as Error).message,
-      });
-    }
-  };
+  
   return (
     <>
       <ClerkLoaded>
@@ -129,56 +79,7 @@ const Library = () => {
                 </Button>
               </DialogTrigger>
               <DialogContent>
-                <form
-                  action=""
-                  onSubmit={handleSubmit(onFolderCreation)}
-                  className="space-y-4"
-                >
-                  <DialogHeader>
-                    <DialogTitle>Add New Folder</DialogTitle>
-                    <DialogDescription>
-                      Add new Folder to your workspace here. Click save when
-                      you&apos;done
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-3">
-                    <Controller
-                      name="name"
-                      control={control}
-                      render={({ field, fieldState }) => (
-                        <Field data-invalid={fieldState.invalid}>
-                          <FieldLabel>Folder Name</FieldLabel>
-                          <Input
-                            {...field}
-                            aria-invalid={fieldState.invalid}
-                            placeholder="Enter Folder Name"
-                          />
-                          {fieldState.invalid && (
-                            <FieldError
-                              className="field-error-message"
-                              errors={[fieldState.error]}
-                            />
-                          )}
-                        </Field>
-                      )}
-                    />
-                  </div>
-                  <DialogFooter>
-                    <DialogClose asChild>
-                      <Button variant="outline">Cancel</Button>
-                    </DialogClose>
-                    <Button type="submit" disabled={isSubmitting}>
-                      {isSubmitting ? (
-                        <>
-                          <Spinner />
-                          Creating
-                        </>
-                      ) : (
-                        "Create"
-                      )}
-                    </Button>
-                  </DialogFooter>
-                </form>
+                <FolderForm workspace={workspace || undefined} />
               </DialogContent>
             </Dialog>
           </div>

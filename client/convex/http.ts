@@ -5,11 +5,6 @@ import { type WebhookEvent } from "@clerk/backend";
 import stripe from "../src/lib/stripe";
 import { api } from "./_generated/api";
 import { ConvexError } from "convex/values";
-import { VIDEO_LIMITS } from "@/constants/constant";
-import { type VideoMetadata, type ValidationResult } from "@/types/video";
-import { validateVideoMetadata } from "@/lib/validateVideoMetaData";
-import { checkVideoLimits } from "@/lib/checkVideoLimits";
-import { Id } from "./_generated/dataModel";
 
 const http = httpRouter();
 
@@ -143,127 +138,6 @@ http.route({
     return new Response("Route Handeld Succefuly", {
       status: 200,
     });
-  }),
-});
-
-http.route({
-  path: "/get-user-video-upload-permission",
-  method: "POST",
-  handler: httpAction(async (ctx, req) => {
-    const metadata = (await req.json()) as Partial<VideoMetadata>;
-    const metadataValidation: ValidationResult =
-      validateVideoMetadata(metadata);
-    if (!metadataValidation.isValid) {
-      return new Response(
-        JSON.stringify({
-          error: metadataValidation.error,
-        }),
-        { status: 400 }
-      );
-    }
-    const { duration, width, height, clerkId } = metadata as VideoMetadata;
-    const user = await ctx.runQuery(api.users.getUserByClerkId, { clerkId });
-    if (!user) {
-      return new Response(JSON.stringify({ error: "User not found" }), {
-        status: 404,
-      });
-    }
-    const folder = await ctx.runQuery(api.folders.getFolderByIdandWorkspaceId, {
-      workspaceId: metadata.workspaceId as Id<"workspaces">,
-      folderId: metadata.folderId as Id<"folders">,
-      clerkId,
-    });
-    if (!folder) {
-      return new Response(JSON.stringify({ error: "Folder not found" }), {
-        status: 404,
-      });
-    }
-    const videos = await ctx.runQuery(api.videos.getVideosByFolderId, {
-      folderId: folder._id,
-      clerkId,
-    });
-    if (!videos) {
-      return new Response(JSON.stringify({ error: "Failed Chekcing Videos" }), {
-        status: 404,
-      });
-    }
-    if (videos.some((video) => video.title === metadata.title)) {
-      return new Response(
-        JSON.stringify({ error: "Video with this title already exist" }),
-        { status: 400 }
-      );
-    }
-    const isPremium = !!user.activeSubscriptionId;
-    const limitCheck = checkVideoLimits(duration, width, height, isPremium);
-    if (!limitCheck.isValid) {
-      return new Response(
-        JSON.stringify({
-          error: limitCheck.error,
-          isPremium,
-          limits: isPremium ? VIDEO_LIMITS.PREMIUM : VIDEO_LIMITS.FREE,
-        }),
-        { status: 400 }
-      );
-    }
-    return new Response(
-      JSON.stringify({
-        isPermissionGranted: true,
-        isPremium,
-        limits: isPremium ? VIDEO_LIMITS.PREMIUM : VIDEO_LIMITS.FREE,
-      }),
-      { status: 200 }
-    );
-  }),
-});
-
-http.route({
-  path: "/create-video",
-  method: "POST",
-  handler: httpAction(async (ctx, request) => {
-    const videoData = (await request.json()) as {
-      clerkId?: string;
-      title?: string;
-      folderId?: Id<"folders">;
-      workspaceId?: Id<"workspaces">;
-      videoUrl?: string;
-      videoPublicId?: string;
-      thumbnailUrl?: string;
-      thumbnailPublicId?: string;
-    };
-    if (
-      videoData.clerkId &&
-      videoData.title &&
-      videoData.folderId &&
-      videoData.workspaceId &&
-      videoData.videoUrl &&
-      videoData.videoPublicId &&
-      videoData.thumbnailUrl &&
-      videoData.thumbnailPublicId
-    ) {
-      try {
-        await ctx.runMutation(api.videos.createVideo, {
-          clerkId: videoData.clerkId,
-          title: videoData.title,
-          folderId: videoData.folderId,
-          workspaceId: videoData.workspaceId,
-          videoUrl: videoData.videoUrl,
-          videoPublicId: videoData.videoPublicId,
-          thumbnailUrl: videoData.thumbnailUrl,
-          thumbnailPublicId: videoData.thumbnailPublicId,
-        });
-      } catch (err) {
-        return new Response((err as Error).message, {
-          status: 400,
-        });
-      }
-      return new Response("Video Created Successfuly", {
-        status: 200,
-      })
-    } else {
-      return new Response("Video Informations Are missing", {
-        status: 400,
-      })
-    }
   }),
 });
 

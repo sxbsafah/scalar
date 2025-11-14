@@ -11,11 +11,14 @@ import { api } from "../../convex/_generated/api";
 import { Id } from "convex/_generated/dataModel";
 import { toast } from "sonner";
 import { useWorkspace } from "@/hooks/useWorkspace";
-import { Dialog, DialogTrigger, DialogHeader, DialogContent, DialogDescription, DialogFooter, DialogTitle } from "./ui/dialog";
-import { Button } from "./ui/button";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+} from "./ui/dialog";
 import { useState } from "react";
-import { Spinner } from "./ui/spinner";
-
+import FolderDelete from "./FolderDelete";
+import FolderForm from "./FolderForm";
 
 
 type FolderProps = {
@@ -35,29 +38,11 @@ const Folder = ({
   folderId,
   isDefault,
 }: FolderProps) => {
-  const deleteFolder = useMutation(api.folders.deleteFolderById);
   const duplicateFolder = useMutation(api.folders.duplicateFolder);
   const workspace = useWorkspace();
   const [isOpen, setIsOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  const handleDeleteFolder = async () => {
-    try {
-      setIsDeleting(true);
-      await deleteFolder({ id: folderId });
-      toast.success("Folder deleted successfully", {
-        position: "bottom-right",
-      });
-    } catch {
-      toast.error("Failed to delete folder", {
-        position: "bottom-right",
-        className: "text-destructive",
-      });
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
+  const [contextMenuDialogWindow, setContextMenuDialogWindow] = useState<"rename" | "delete" | "move">("delete");
+  
   const handleFolderDuplication = async () => {
     try {
       if (workspace) {
@@ -96,10 +81,12 @@ const Folder = ({
             </button>
           </ContextMenuTrigger>
           <ContextMenuContent className="w-52">
-            <ContextMenuItem>
-              Rename Folder
-              <ContextMenuShortcut>⌘R</ContextMenuShortcut>
-            </ContextMenuItem>
+            <DialogTrigger asChild onClick={() => setContextMenuDialogWindow("rename")}>
+              <ContextMenuItem>
+                Rename Folder
+                <ContextMenuShortcut>⌘R</ContextMenuShortcut>
+              </ContextMenuItem>
+            </DialogTrigger>
             <ContextMenuItem>
               Move Folder
               <ContextMenuShortcut>⌘M</ContextMenuShortcut>
@@ -108,7 +95,7 @@ const Folder = ({
               Duplicate
               <ContextMenuShortcut>⌘D</ContextMenuShortcut>
             </ContextMenuItem>
-            <DialogTrigger disabled={isDefault} asChild>
+            <DialogTrigger disabled={isDefault} asChild onClick={() => setContextMenuDialogWindow("delete")}>
               <ContextMenuItem
                 className="text-destructive"
                 disabled={isDefault}
@@ -122,28 +109,8 @@ const Folder = ({
           </ContextMenuContent>
         </ContextMenu>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Folder</DialogTitle>
-            <DialogDescription>
-              This action cannot be undone. This will permanently delete your
-              Folder and remove everything associated with it.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isDeleting}>
-              Cancel
-            </Button>
-            <Button onClick={handleDeleteFolder} disabled={isDeleting}>
-              {isDeleting ? (
-                <>
-                  Deleting
-                  <Spinner/>
-                </>
-              ) : (
-                  "Delete Folder"
-              )}
-            </Button>
-          </DialogFooter>
+          {contextMenuDialogWindow === "delete" && <FolderDelete folderId={folderId} setIsOpen={setIsOpen} />}
+          {contextMenuDialogWindow === "rename" && <FolderForm workspace={workspace || undefined} folderId={folderId}/>}
         </DialogContent>
       </Dialog>
     </>
