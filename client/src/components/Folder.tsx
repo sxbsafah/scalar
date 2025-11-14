@@ -11,15 +11,11 @@ import { api } from "../../convex/_generated/api";
 import { Id } from "convex/_generated/dataModel";
 import { toast } from "sonner";
 import { useWorkspace } from "@/hooks/useWorkspace";
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-} from "./ui/dialog";
+import { Dialog, DialogTrigger, DialogContent } from "./ui/dialog";
 import { useState } from "react";
 import FolderDelete from "./FolderDelete";
 import FolderForm from "./FolderForm";
-
+import MoveForm from "./MoveForm";
 
 type FolderProps = {
   folderName: string;
@@ -41,8 +37,10 @@ const Folder = ({
   const duplicateFolder = useMutation(api.folders.duplicateFolder);
   const workspace = useWorkspace();
   const [isOpen, setIsOpen] = useState(false);
-  const [contextMenuDialogWindow, setContextMenuDialogWindow] = useState<"rename" | "delete" | "move">("delete");
-  
+  const [contextMenuDialogWindow, setContextMenuDialogWindow] = useState<
+    "rename" | "delete" | "move"
+  >("delete");
+
   const handleFolderDuplication = async () => {
     try {
       if (workspace) {
@@ -81,21 +79,30 @@ const Folder = ({
             </button>
           </ContextMenuTrigger>
           <ContextMenuContent className="w-52">
-            <DialogTrigger asChild onClick={() => setContextMenuDialogWindow("rename")}>
+            <DialogTrigger
+              asChild
+              onClick={() => setContextMenuDialogWindow("rename")}
+            >
               <ContextMenuItem>
                 Rename Folder
                 <ContextMenuShortcut>⌘R</ContextMenuShortcut>
               </ContextMenuItem>
             </DialogTrigger>
-            <ContextMenuItem>
-              Move Folder
-              <ContextMenuShortcut>⌘M</ContextMenuShortcut>
-            </ContextMenuItem>
+            <DialogTrigger onClick={() => setContextMenuDialogWindow("move")} asChild>
+              <ContextMenuItem>
+                Move Folder
+                <ContextMenuShortcut>⌘M</ContextMenuShortcut>
+              </ContextMenuItem>
+            </DialogTrigger>
             <ContextMenuItem onClick={handleFolderDuplication}>
               Duplicate
               <ContextMenuShortcut>⌘D</ContextMenuShortcut>
             </ContextMenuItem>
-            <DialogTrigger disabled={isDefault} asChild onClick={() => setContextMenuDialogWindow("delete")}>
+            <DialogTrigger
+              disabled={isDefault}
+              asChild
+              onClick={() => setContextMenuDialogWindow("delete")}
+            >
               <ContextMenuItem
                 className="text-destructive"
                 disabled={isDefault}
@@ -109,8 +116,18 @@ const Folder = ({
           </ContextMenuContent>
         </ContextMenu>
         <DialogContent>
-          {contextMenuDialogWindow === "delete" && <FolderDelete folderId={folderId} setIsOpen={setIsOpen} />}
-          {contextMenuDialogWindow === "rename" && <FolderForm workspace={workspace || undefined} folderId={folderId}/>}
+          {contextMenuDialogWindow === "delete" && (
+            <FolderDelete folderId={folderId} setIsOpen={setIsOpen} />
+          )}
+          {contextMenuDialogWindow === "rename" && (
+            <FolderForm
+              workspace={workspace || undefined}
+              folderId={folderId}
+            />
+          )}
+          {contextMenuDialogWindow === "move" && (
+            <MoveForm currentWorkspace={workspace!} folderId={folderId}/>
+          )}
         </DialogContent>
       </Dialog>
     </>

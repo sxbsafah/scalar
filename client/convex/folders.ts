@@ -228,3 +228,46 @@ export const duplicateFolder = mutation({
     });
   },
 });
+
+
+export const moveFolderToAnotherWorkspace = mutation({
+  args: {
+    folderId: v.id("folders"),
+    sourceWorkspaceId: v.id("workspaces"),
+    destinationWorkspaceId: v.id("workspaces"),
+  },
+  handler: async (ctx, { folderId, sourceWorkspaceId, destinationWorkspaceId }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError("User Identity Is Uknown");
+    }
+    if (sourceWorkspaceId === destinationWorkspaceId) {
+      throw new ConvexError("Source and Destination Workspaces Cannot Be The Same");
+    }
+    const sourceWorkspace = (await ctx.db.get(sourceWorkspaceId)) as Doc<"workspaces">;
+    if (!sourceWorkspace) {
+      throw new ConvexError("Source Workspace Not Found");
+    }
+    const destinationWorkspace = (await ctx.db.get(destinationWorkspaceId)) as Doc<"workspaces">;
+    if (!destinationWorkspace) {
+      throw new ConvexError("Destination Workspace Not Found");
+    }
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("clerkId"), identity.subject))
+      .first();
+    if (!user) {
+      throw new ConvexError("User Not Found");
+    }
+    if (!user.workspaces.includes(sourceWorkspace._id) || !user.workspaces.includes(destinationWorkspace._id)) {
+      throw new ConvexError("User Does Not Have Access To This Workspace");
+    }
+    const folderToMove = await ctx.db.get(folderId);
+    if (!folderToMove) {
+      throw new ConvexError("Folder Not Found");
+    }
+    await ctx.db.patch(folderToMove._id, {
+      workspaceId: destinationWorkspace._id,
+    })
+  }
+})
