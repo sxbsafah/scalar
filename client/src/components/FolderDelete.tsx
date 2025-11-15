@@ -11,17 +11,21 @@ import {
   DialogDescription,
   DialogFooter,
 } from "./ui/dialog";
+import { useWorkspace } from "@/hooks/useWorkspace";
 
 
 
 const FolderDelete = ({ folderId, setIsOpen }: { folderId: Id<"folders">, setIsOpen: Dispatch<SetStateAction<boolean>> }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const deleteFolder = useMutation(api.folders.deleteFolderById);
+  const workspace = useWorkspace();
 
   const handleDeleteFolder = async () => {
     try {
       setIsDeleting(true);
-      await deleteFolder({ id: folderId });
+      if (workspace) {
+        await deleteFolder({ id: folderId, currentWorkspaceId: workspace._id });
+      }
       toast.success("Folder deleted successfully", {
         position: "bottom-right",
       });

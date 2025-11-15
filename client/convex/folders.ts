@@ -127,8 +127,9 @@ export const getFolderByIdandWorkspaceId = query({
 export const deleteFolderById = mutation({
   args: {
     id: v.id("folders"),
+    currentWorkspaceId: v.id("workspaces"),
   },
-  handler: async (ctx, { id }) => {
+  handler: async (ctx, { id, currentWorkspaceId }) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new ConvexError("User Identity is Unknown");
@@ -144,10 +145,11 @@ export const deleteFolderById = mutation({
     if (!folder) {
       throw new ConvexError("Folder Not Found");
     }
-    const isDefault = !!(await ctx.db
-      .query("workspaces")
-      .filter((q) => q.eq(q.field("defaultFolder"), folder._id))
-      .first());
+    const workspace = await ctx.db.get(currentWorkspaceId);
+    if (!workspace) {
+      throw new ConvexError("Workspace Not found");
+    }
+    const isDefault = workspace.defaultFolder === id;
     if (isDefault) {
       throw new ConvexError("Cannot Delete Default Folder");
     }
