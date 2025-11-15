@@ -60,14 +60,15 @@ export const upsertFolder = mutation({
     const validatedData = folderSchema.safeParse({ name: folderName });
 
     if (!validatedData.success) {
-      return { errors: validatedData.error.message };
+      throw new ConvexError(validatedData.error.message);
     }
     const folders = await ctx.runQuery(api.folders.getFoldersByWorkspaceId, {
       workspaceId,
     });
+    
     for (let i = 0; i < folders.length; i++) {
-      if (folders[i].name === folderName) {
-        return { errors: ["&#x2022; Folder Already Exist With this Name"] };
+      if (folders[i].name === folderName && folders[i]._id.toString() !== (folderId ? folderId.toString() : "")) {
+        throw new ConvexError("Folder Already Exist With this Name");
       }
     }
     if (!folderId) {
@@ -249,6 +250,10 @@ export const moveFolderToAnotherWorkspace = mutation({
     const sourceWorkspace = (await ctx.db.get(sourceWorkspaceId)) as Doc<"workspaces">;
     if (!sourceWorkspace) {
       throw new ConvexError("Source Workspace Not Found");
+    }
+    const isDefault = sourceWorkspace.defaultFolder === folderId;
+    if (isDefault) {
+      throw new ConvexError("Default Folder Cannot Be Moved");
     }
     const destinationWorkspace = (await ctx.db.get(destinationWorkspaceId)) as Doc<"workspaces">;
     if (!destinationWorkspace) {

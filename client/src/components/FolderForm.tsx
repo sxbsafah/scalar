@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Doc, Id } from "../../convex/_generated/dataModel";
 import { toast } from "sonner";
+import { ConvexError } from "convex/values";
 
 export const folderSchema = z.object({
   name: z.string().min(2, "Folder name must be at least 2 characters long"),
@@ -23,7 +24,13 @@ export const folderSchema = z.object({
 
 type FolderType = z.infer<typeof folderSchema>;
 
-const FolderForm = ({ workspace, folderId }: { workspace?: Doc<"workspaces">, folderId?:Id<"folders"> }) => {
+const FolderForm = ({
+  workspace,
+  folderId,
+}: {
+  workspace?: Doc<"workspaces">;
+  folderId?: Id<"folders">;
+}) => {
   const {
     handleSubmit,
     setError,
@@ -41,33 +48,27 @@ const FolderForm = ({ workspace, folderId }: { workspace?: Doc<"workspaces">, fo
   const handleFolderUpsertion = async ({ name }: FolderType) => {
     try {
       if (workspace) {
-        const folder = await upsertFolder({
+        await upsertFolder({
           workspaceId: workspace._id,
           folderName: name,
-          folderId: folderId 
+          folderId: folderId,
         });
-
-        if (typeof folder === "object" && "error" in folder) {
-          setError("name", {
-            message: "Folder with This Name Already Exist",
-          });
-          return;
-        }
+        reset({
+          name: "",
+        }); 
+        toast.success(
+          `Folder ${folderId ? "updated" : "created"} successfully`,
+          {
+            position: "bottom-right",
+          }
+        );
       }
-      reset({
-        name: "",
-      }); // reset other form state but keep defaultValues and form values
-      toast.success(`Folder ${folderId ? "updated" : "created"} successfully`, {
-        position: "bottom-right",
-      });
     } catch (err) {
-      setError("name", {
-        message: (err as Error).message,
-      });
-      toast.error(`Failed to ${folderId ? "update" : "create"} folder`, {
-        position: "bottom-right",
-        className: "text-destructive",
-      });
+      if (err instanceof ConvexError) {
+        setError("name", {
+          message: err.data,
+        });
+      }
     }
   };
 
@@ -80,7 +81,9 @@ const FolderForm = ({ workspace, folderId }: { workspace?: Doc<"workspaces">, fo
       <DialogHeader>
         <DialogTitle>{folderId ? "Edit Folder" : "Add New Folder"}</DialogTitle>
         <DialogDescription>
-          {folderId ? "Edit your folder details here. Click save when you're done" : "Add new Folder to your workspace here. Click Create when you're done"}
+          {folderId
+            ? "Edit your folder details here. Click save when you're done"
+            : "Add new Folder to your workspace here. Click Create when you're done"}
         </DialogDescription>
       </DialogHeader>
       <div className="grid gap-3">
@@ -115,8 +118,10 @@ const FolderForm = ({ workspace, folderId }: { workspace?: Doc<"workspaces">, fo
               <Spinner />
               {folderId ? "Saving" : "Creating"}
             </>
+          ) : folderId ? (
+            "Save"
           ) : (
-            folderId ? "Save" : "Create"
+            "Create"
           )}
         </Button>
       </DialogFooter>

@@ -88,8 +88,12 @@ const Folder = ({
                 <ContextMenuShortcut>⌘R</ContextMenuShortcut>
               </ContextMenuItem>
             </DialogTrigger>
-            <DialogTrigger onClick={() => setContextMenuDialogWindow("move")} asChild>
-              <ContextMenuItem>
+            <DialogTrigger
+              onClick={() => setContextMenuDialogWindow("move")}
+              asChild
+              disabled={isDefault}
+            >
+              <ContextMenuItem disabled={isDefault}>
                 Move Folder
                 <ContextMenuShortcut>⌘M</ContextMenuShortcut>
               </ContextMenuItem>
@@ -126,7 +130,7 @@ const Folder = ({
             />
           )}
           {contextMenuDialogWindow === "move" && (
-            <MoveForm currentWorkspace={workspace!} folderId={folderId}/>
+            <MoveForm currentWorkspace={workspace!} folderId={folderId} />
           )}
         </DialogContent>
       </Dialog>

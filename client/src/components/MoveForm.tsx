@@ -50,6 +50,11 @@ const MoveForm = ({ currentWorkspace, folderId }: MoveFormProps) => {
   });
   const onFolderMove = async (data: MoveFormType) => {
     try {
+      if (currentWorkspace.defaultFolder === folderId) {
+        return form.setError("from", {
+          message: "Default Folder Cannot Be Moved",
+        });
+      }
       await moveFolder({
         sourceWorkspaceId: currentWorkspace._id,
         destinationWorkspaceId: data.to as Id<"workspaces">,
