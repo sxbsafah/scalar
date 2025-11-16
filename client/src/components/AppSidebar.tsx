@@ -71,7 +71,7 @@ const AppSidebar = ({
   // implementing Invitations
 
   return (
-    <Sidebar>
+    <Sidebar collapsible="icon">
       <SidebarHeader className="mb-4">
         {workspaces ? (
           <Logo />
@@ -101,7 +101,7 @@ const AppSidebar = ({
                   <span className="ml-1 text-[14px] font-bold text-card-foreground whitespace-nowrap">
                     's Workspace
                   </span>
-                </div>  
+                </div>
 
                 {open ? (
                   <ChevronUp
@@ -146,25 +146,17 @@ const AppSidebar = ({
             </div>
           </CollapsibleContent>
         </Collapsible>
-        {workspaces && users ? (
-          <Invite users={users} workspaceId={workspace?._id}>
-            <Button
-              size={"sm"}
-              className={
-                "h-auto px-2 py-1 font-semibold gap-1.5 text-[12px] w-full"
-              }
-            >
-              Invite To Workspace
-              <Plus
-                width={12}
-                height={12}
-                className="text-primary-foreground"
-              />
-            </Button>
-          </Invite>
-        ) : (
-          <Skeleton className="h-4 w-full rounded-xl" />
-        )}
+        <Invite users={users} workspaceId={workspace?._id}>
+          <Button
+            size={"sm"}
+            className={
+              "h-auto px-2 py-1 font-semibold gap-1.5 text-[12px] w-full"
+            }
+          >
+            Invite To Workspace
+            <Plus width={12} height={12} className="text-primary-foreground" />
+          </Button>
+        </Invite>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>

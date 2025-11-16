@@ -48,6 +48,12 @@ export const createNotification = mutation({
     if (isUserInvited) {
       throw new ConvexError("User Is Already Invited");
     }
+    const toMemberhips = await ctx.db.query("memberships").filter(q => q.eq(q.field("userId"), to)).collect();
+    for (let i = 0; i < toMemberhips.length; i++) {
+      if (toMemberhips[i].workspaceId === workspace) {
+        throw new ConvexError("User Is Already A Member");
+      }
+    }
     return await ctx.db.insert("notifications", {
       userId: fromUser._id,
       workspace: workspace,

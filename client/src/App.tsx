@@ -8,27 +8,32 @@ import PaymentSucess from "./pages/PaymentSuccess";
 import Billing from "./pages/Billing";
 import Notifications from "@/pages/Notifications";
 import { UserProvider } from "./providers/UserProvider";
+import { ThemeProvider } from "./providers/ThemeProvider";
+import Settings from "./pages/Settings";
 
 function App() {
   return (
-    <Routes>
-      <Route element={<ProtectedRoute />}>
-        <Route
-          element={
-            <UserProvider>
-              <Home />
-            </UserProvider>
-          }
-        >
-          <Route index element={<Library />} />
-          <Route path="/billing" element={<Billing />} />
-          <Route path="/notifications" element={<Notifications />} />
+    <ThemeProvider defaultTheme="dark" >
+      <Routes>
+        <Route element={<ProtectedRoute />}>
+          <Route
+            element={
+              <UserProvider>
+                <Home />
+              </UserProvider>
+            }
+          >
+            <Route index element={<Library />} />
+            <Route path="/billing" element={<Billing />} />
+            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/settings" element={<Settings />} />
+          </Route>
         </Route>
-      </Route>
-      <Route path="/sign-in" element={<SignInPage />} />
-      <Route path="/sign-up" element={<SignUpPage />} />
-      <Route path="/pro/sucess" element={<PaymentSucess />} />
-    </Routes>
+        <Route path="/sign-in" element={<SignInPage />} />
+        <Route path="/sign-up" element={<SignUpPage />} />
+        <Route path="/pro/sucess" element={<PaymentSucess />} />
+      </Routes>
+    </ThemeProvider>
   );
 }
 

@@ -39,7 +39,7 @@ const Folder = ({
   const [isOpen, setIsOpen] = useState(false);
   const [contextMenuDialogWindow, setContextMenuDialogWindow] = useState<
     "rename" | "delete" | "move"
-  >("delete");
+    >("delete");
 
   const handleFolderDuplication = async () => {
     try {

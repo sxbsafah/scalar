@@ -141,16 +141,20 @@ export const getAllUsers = query({
         profileImageUrl: user.profileImageUrl,
         plan: user.activeSubscriptionId ? "pro" : ("free" as "free" | "pro"),
         userId: user._id,
-        isInvited: (await ctx.db
-          .query("notifications")
-          .filter((q) => q.eq(q.field("destination"), user._id))
-          .filter((q) => q.eq(q.field("workspace"), workspace))
-          .first())
-          ? true
-          : false,
+        isInvited:
+          (await ctx.db
+            .query("notifications")
+            .filter((q) => q.eq(q.field("destination"), user._id))
+            .filter((q) => q.eq(q.field("workspace"), workspace))
+            .first()) ||
+          (await ctx.db
+            .query("memberships")
+            .filter((q) => q.eq(q.field("userId"), user._id))
+            .filter((q) => q.eq(q.field("workspaceId"), workspace))
+            .first())
+            ? true
+            : false,
       }))
     );
   },
 });
-
-

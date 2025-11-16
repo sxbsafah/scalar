@@ -83,7 +83,7 @@ const FolderForm = ({
         <DialogDescription>
           {folderId
             ? "Edit your folder details here. Click save when you're done"
-            : "Add new Folder to your workspace here. Click Create when you're done"}
+            : "Add Folder to your workspace here. Click Create when you're done"}
         </DialogDescription>
       </DialogHeader>
       <div className="grid gap-3">

@@ -10,6 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Doc, Id } from "convex/_generated/dataModel";
 import { UserButton } from "@clerk/clerk-react";
+import { Input } from "./ui/input";
 
 export const videoSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -78,7 +79,7 @@ const Header = ({
   return (
     <header className="flex items-center justify-between py-4 w-full mb-12">
       <div>
-        <input className="w-[400px]" />
+        <Input className="w-[400px]"/>
       </div>
 
       <div className="flex items-center gap-4">

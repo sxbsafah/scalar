@@ -28,8 +28,8 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, "preload.mjs"),
       nodeIntegration: false,
-      contextIsolation: true
-      // devTools: false,
+      contextIsolation: true,
+      devTools: true
     }
   });
   win.webContents.on("did-finish-load", () => {
